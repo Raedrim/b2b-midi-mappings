@@ -5,6 +5,7 @@ Every controller lives in controllers/<slug>/ and is described by one file, mapp
 This tool turns that file into the importable presets and the mapping tables.
 
     python tools/b2bmap.py new <slug> --name "Vendor Model" --port "MIDI input name"
+    python tools/b2bmap.py import preset.json <slug>   # start from a preset exported from B2B Studio
     python tools/b2bmap.py learn <slug>        # press controls, name them, get YAML
     python tools/b2bmap.py targets [words]     # search the B2B Studio control ids
     python tools/b2bmap.py build  [<slug>]     # write presets and docs
@@ -270,6 +271,9 @@ def validate(mapping, entries, registry, source):
         if warn and warn not in seen_warn:
             seen_warn.add(warn)
             warnings.append(f"{source}: {warn}")
+        if str(e.doc).startswith("TODO"):
+            errors.append(f"{source}: {e.where}: the description of {e.target} is still a TODO. "
+                          "Say what it does (doc:) or why you chose it (why:).")
     for pname, profile in mapping["profiles"].items():
         by_target, by_src = {}, {}
         for e in entries:
@@ -559,14 +563,120 @@ def yaml_quote(s):
     return json.dumps(s, ensure_ascii=False)
 
 
-def binding_text(target, kind, ch, num, doc, why, opts):
+def binding_text(target, kind, ch, num, doc, why, opts, share=False):
     msg = f"{kind} {ch}" if kind == "pb" else f"{kind} {ch} 0x{num:02X}"
     lines = [f"  - target: {yaml_quote(target)}", f"    msg: {yaml_quote(msg)}"]
     if opts:
         lines.append("    opts: {" + ", ".join(f"{k}: {yaml_quote(v) if isinstance(v, str) else str(v).lower()}"
                                                 for k, v in opts.items()) + "}")
+    if share:
+        lines.append("    share: true")
     lines.append(f"    {'why' if why else 'doc'}: {yaml_quote(doc)}")
     return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------- import
+TODO_DOC = "TODO: say what this does on your controller"
+
+
+def parse_src(src, where):
+    """'DDJ-FLX4|note|0|11' -> ('DDJ-FLX4', 'note', 0, 11). The port name may itself contain '|'."""
+    parts = str(src).rsplit("|", 3)
+    if len(parts) != 4 or parts[1] not in KINDS:
+        raise MappingError(f"{where}: cannot read src {src!r}. Expected <port>|note|cc|pb|<channel>|<number>")
+    port, kind = parts[0], parts[1]
+    ch, num = to_int(parts[2], where, "channel"), to_int(parts[3], where, "number")
+    if not 0 <= ch <= 15 or not 0 <= num <= 127:
+        raise MappingError(f"{where}: src {src!r} is outside the MIDI range (channel 0-15, number 0-127)")
+    return port, kind, ch, num
+
+
+def import_options(raw):
+    """Keep the options B2B Studio reads, in the form mapping.yaml uses. `rel: true` means two's complement."""
+    opts = {}
+    rel = raw.get("rel")
+    if rel is True:
+        opts["rel"] = "2c"
+    elif isinstance(rel, str) and rel in REL_VALUES:
+        opts["rel"] = rel
+    if raw.get("invert") is True:
+        opts["invert"] = True
+    for key in ("sens", "pos"):
+        if isinstance(raw.get(key), (int, float)) and not isinstance(raw.get(key), bool):
+            opts[key] = raw[key]
+    return opts
+
+
+def convert_preset(preset, port=None):
+    """Turn an exported B2B Studio preset into (name, port, YAML bindings text, entries, notes)."""
+    if not isinstance(preset, dict) or not isinstance(preset.get("bindings"), dict):
+        raise MappingError("this does not look like a B2B Studio preset: no 'bindings' object")
+    rows, ports = [], {}
+    for target, body in preset["bindings"].items():
+        if not isinstance(body, dict) or "src" not in body:
+            raise MappingError(f"{target}: binding has no 'src'")
+        p, kind, ch, num = parse_src(body["src"], target)
+        ports.setdefault(p, 0)
+        ports[p] += 1
+        rows.append((target, p, kind, ch, num, import_options(body)))
+    if not rows:
+        raise MappingError("the preset has no bindings")
+    if port is None:
+        if len(ports) > 1:
+            listing = "\n".join(f"  {n:4d} bindings  {p}" for p, n in ports.items())
+            raise MappingError("the preset reads from several MIDI inputs. Re-run with --port set to one of them:\n"
+                               + listing)
+        port = next(iter(ports))
+    elif port not in ports:
+        raise MappingError(f"no binding reads from {port!r}. Inputs in the preset:\n"
+                           + "\n".join(f"  {p}" for p in ports))
+    rows = [r for r in rows if r[1] == port]
+    notes = []
+    skipped = sum(n for p, n in ports.items() if p != port)
+    if skipped:
+        notes.append(f"{skipped} binding(s) from other MIDI inputs were left out.")
+    uses = {}
+    for r in rows:
+        uses[(r[2], r[3], r[4])] = uses.get((r[2], r[3], r[4]), 0) + 1
+    text = "".join(binding_text(t, k, c, n, TODO_DOC, False, o, share=uses[(k, c, n)] > 1)
+                   for t, _, k, c, n, o in rows)
+    shared = sum(1 for v in uses.values() if v > 1)
+    if shared:
+        notes.append(f"{shared} controller message(s) drive several targets and were marked 'share: true'. "
+                     "Check each one is intended.")
+    return str(preset.get("name") or ""), port, text, len(rows), notes
+
+
+def cmd_import(args):
+    slug = args.slug
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
+        raise MappingError("slug must be lowercase letters, digits and dashes, for example 'ddj-flx4'")
+    d = CONTROLLERS / slug
+    if d.exists():
+        raise MappingError(f"controllers/{slug} already exists")
+    try:
+        preset = json.loads(pathlib.Path(args.file).read_text(encoding="utf-8-sig"))
+    except OSError as exc:
+        raise MappingError(f"cannot read {args.file}: {exc}")
+    except json.JSONDecodeError as exc:
+        raise MappingError(f"{args.file} is not valid JSON: {exc}")
+    pname, port, bindings, count, notes = convert_preset(preset, args.port)
+    name = args.name or pname or slug
+    registry = load_registry()
+    unknown = sorted({e for e in (check_target(t, registry)[0] for t in preset["bindings"]) if e})
+    write_text(d / "mapping.yaml", TEMPLATE.format(slug=slug, name=name, port=port) + bindings)
+    write_text(d / "README.md", README_STUB.format(name=name))
+    print(f"Imported {count} bindings into controllers/{slug}/mapping.yaml")
+    for note in notes:
+        print(f"  note: {note}")
+    for err in unknown:
+        print(f"  unknown target: {err.split(': ', 1)[0]}")
+    print("Next:")
+    print(f"  1. Replace every '{TODO_DOC}' in controllers/{slug}/mapping.yaml.")
+    print("     Use doc: when the controller has a matching control, why: when you made a judgement call.")
+    print(f"  2. Fill in controllers/{slug}/README.md, including what you tested and on which system.")
+    print("  3. python tools/b2bmap.py build, then python tools/b2bmap.py check")
+    return 0
 
 
 def capture(next_message, timeout=None):
@@ -745,6 +855,12 @@ def main(argv=None):
     p.add_argument("--name", required=True, help='for example "Vendor Model"')
     p.add_argument("--port", required=True, help="the MIDI input name as B2B Studio lists it")
     p.set_defaults(fn=cmd_new)
+    p = sub.add_parser("import", help="turn a preset exported from B2B Studio into controllers/<slug>")
+    p.add_argument("file", help="the exported .json preset")
+    p.add_argument("slug")
+    p.add_argument("--name", help='for example "Vendor Model" (default: the name inside the preset)')
+    p.add_argument("--port", help="the MIDI input to import, if the preset reads from several")
+    p.set_defaults(fn=cmd_import)
     p = sub.add_parser("learn", help="press controls and append bindings to mapping.yaml")
     p.add_argument("slug")
     p.add_argument("--profile")

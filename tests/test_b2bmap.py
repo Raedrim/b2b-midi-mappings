@@ -190,6 +190,110 @@ class Learn(unittest.TestCase):
             self.assertEqual(errs, [])
 
 
+def exported(bindings, name="Their Pad"):
+    return {"app": "B2B Studio", "kind": "midi-preset", "version": 1, "name": name, "bindings": bindings}
+
+
+class Import(unittest.TestCase):
+    def convert(self, preset, port=None):
+        name, port, text, count, notes = b2bmap.convert_preset(preset, port)
+        doc = b2bmap.TEMPLATE.format(slug="x", name=name, port=port) + text
+        return doc, count, notes
+
+    def test_parse_src(self):
+        self.assertEqual(b2bmap.parse_src("DDJ-FLX4|note|7|32", "t"), ("DDJ-FLX4", "note", 7, 32))
+        self.assertEqual(b2bmap.parse_src("A|B port|pb|2|0", "t"), ("A|B port", "pb", 2, 0))
+        for bad in ("DDJ|note|0", "DDJ|sysex|0|1", "DDJ|note|16|1", "DDJ|cc|0|128", "DDJ|cc|x|1"):
+            with self.assertRaises(b2bmap.MappingError):
+                b2bmap.parse_src(bad, "t")
+
+    def test_options_use_the_yaml_spelling(self):
+        self.assertEqual(b2bmap.import_options({"rel": True, "invert": True, "sens": 5}),
+                         {"rel": "2c", "invert": True, "sens": 5})
+        self.assertEqual(b2bmap.import_options({"rel": "binoff", "invert": False, "pos": 1}),
+                         {"rel": "binoff", "pos": 1})
+        self.assertEqual(b2bmap.import_options({"rel": False, "bogus": 1, "sens": "x"}), {})
+
+    def test_every_binding_starts_as_a_todo_that_check_rejects(self):
+        doc, count, _ = self.convert(exported({"d0@cdj-3000x:play": {"src": "Pad|note|0|11"},
+                                               "mx@djm-a9:ch0.fader": {"src": "Pad|cc|0|19"}}))
+        self.assertEqual(count, 2)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "mapping.yaml"
+            path.write_text(doc, encoding="utf-8")
+            m = b2bmap.load_mapping(path)
+            errs, _ = b2bmap.validate(m, b2bmap.expand(m), REGISTRY, "x")
+            self.assertEqual(len(errs), 2)
+            self.assertTrue(all("TODO" in e for e in errs))
+            path.write_text(doc.replace(b2bmap.TODO_DOC, "Done."), encoding="utf-8")
+            m = b2bmap.load_mapping(path)
+            self.assertEqual(b2bmap.validate(m, b2bmap.expand(m), REGISTRY, "x")[0], [])
+
+    def test_shared_messages_are_marked(self):
+        doc, _, notes = self.convert(exported({"d0@cdj-3000x:rotary": {"src": "Pad|cc|6|64", "rel": True},
+                                               "d1@cdj-3000x:rotary": {"src": "Pad|cc|6|64", "rel": True}}))
+        self.assertEqual(doc.count("share: true"), 2)
+        self.assertTrue(any("share" in n for n in notes))
+        m = b2bmap.yaml.safe_load(doc.replace(b2bmap.TODO_DOC, "Browse."))
+        self.assertEqual(b2bmap.validate(m, b2bmap.expand(m), REGISTRY, "x")[0], [])
+
+    def test_several_inputs_need_a_choice(self):
+        preset = exported({"d0@cdj-3000x:play": {"src": "Pad|note|0|11"}, "d0@cdj-3000x:cue": {"src": "Other|note|0|12"}})
+        with self.assertRaises(b2bmap.MappingError) as ctx:
+            b2bmap.convert_preset(preset)
+        self.assertIn("--port", str(ctx.exception))
+        doc, count, notes = self.convert(preset, "Other")
+        self.assertEqual(count, 1)
+        self.assertNotIn("play", doc.split("bindings:")[-1])
+        self.assertTrue(any("left out" in n for n in notes))
+        with self.assertRaises(b2bmap.MappingError):
+            b2bmap.convert_preset(preset, "Missing")
+
+    def test_rejects_things_that_are_not_presets(self):
+        for bad in ([], {"bindings": []}, {"bindings": {}}, exported({"d0@cdj-3000x:play": {}})):
+            with self.assertRaises(b2bmap.MappingError):
+                b2bmap.convert_preset(bad)
+
+    def test_shipped_presets_survive_the_round_trip(self):
+        """Import a generated preset, describe every binding, rebuild it: same sources and options."""
+        import json
+        for f in sorted((b2bmap.CONTROLLERS / "ddj-flx4" / "presets").glob("*.json")):
+            original = json.loads(f.read_text(encoding="utf-8"))
+            _, port, text, _, _ = b2bmap.convert_preset(original)
+            doc = (b2bmap.TEMPLATE.format(slug="x", name="X", port=port) + text).replace(b2bmap.TODO_DOC, "d")
+            m = b2bmap.yaml.safe_load(doc)
+            entries = b2bmap.expand(m)
+            self.assertEqual(b2bmap.validate(m, entries, REGISTRY, "x")[0], [], f.name)
+            rebuilt = {e.target: ({"src": e.src(port)}, e.opts) for e in entries}
+            self.assertEqual(set(rebuilt), set(original["bindings"]), f.name)
+            for target, body in original["bindings"].items():
+                src, opts = rebuilt[target]
+                want = {k: v for k, v in body.items() if k in b2bmap.OPTION_KEYS}
+                self.assertEqual(src["src"], body["src"], target)
+                self.assertEqual(opts, want, target)
+
+    def test_command_writes_the_controller_folder(self):
+        import json
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            preset = tmp / "export.json"
+            preset.write_text(json.dumps(exported({"d0@cdj-3000x:play": {"src": "Pad|note|0|11"},
+                                                   "d0@cdj-3000x:nope": {"src": "Pad|note|0|12"}})), encoding="utf-8")
+            saved = b2bmap.CONTROLLERS
+            b2bmap.CONTROLLERS = tmp / "controllers"
+            try:
+                self.assertEqual(b2bmap.main(["import", str(preset), "their-pad"]), 0)
+                d = b2bmap.CONTROLLERS / "their-pad"
+                self.assertTrue((d / "README.md").exists())
+                m = b2bmap.load_mapping(d / "mapping.yaml")
+                self.assertEqual((m["name"], m["profiles"]["default"]["port"]), ("Their Pad", "Pad"))
+                self.assertEqual(len(m["bindings"]), 2)
+                self.assertEqual(b2bmap.main(["import", str(preset), "their-pad"]), 1)     # will not overwrite
+                self.assertEqual(b2bmap.main(["import", str(preset), "Bad Slug"]), 1)
+            finally:
+                b2bmap.CONTROLLERS = saved
+
+
 @unittest.skipUnless(importlib.util.find_spec("mido"), "mido is not installed")
 class LearnCapture(unittest.TestCase):
     """The parts of `learn` that talk to the controller, driven by scripted messages."""
