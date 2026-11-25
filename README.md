@@ -38,7 +38,7 @@ CONTRIBUTING.md              how to add a controller
 
 ## Contributing
 
-We welcome mappings for other controllers and fixes to this one. You describe a controller in one YAML file, and the tools generate the presets and docs and check them. Three commands cover the workflow (`new`, `learn`, `check`), and `learn` writes most of the file while you press controls.
+We welcome mappings for other controllers and fixes to this one. You describe a controller in one YAML file, and the tools generate the presets and docs and check them. Already mapped yours with B2B Studio's MIDI Learn? `import` turns your exported preset into that file in one command. Otherwise three commands cover the workflow (`new`, `learn`, `check`), and `learn` writes most of the file while you press controls.
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) walks through the process.
 - [docs/MAPPING-FORMAT.md](docs/MAPPING-FORMAT.md) is the format reference.

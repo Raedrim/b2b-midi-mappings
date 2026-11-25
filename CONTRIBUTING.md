@@ -22,6 +22,18 @@ pip install -r tools/requirements.txt
 
 You need Python 3.9 or newer. The steps are the same on Windows and macOS.
 
+### Already mapped it in B2B Studio?
+
+If you built your mapping with B2B Studio's own MIDI Learn, you have most of the work done. Export the preset from the app and import it here:
+
+```bash
+python tools/b2bmap.py import my-export.json my-controller --name "Vendor Model"
+```
+
+The tool reads every binding, works out the options (endless encoders, inverted faders, sensitivity), marks controls that share one message, and writes `controllers/my-controller/mapping.yaml` plus a README stub. It leaves one thing for you: each binding carries a `TODO` description, and `check` fails until you replace them with `doc:` or `why:` lines. If the export reads from several MIDI inputs, add `--port "name"` to pick one. Then run `build` and `check` as below.
+
+No Python? Open an issue with the exported file attached, and a maintainer can run the import for you.
+
 ### Three steps
 
 ```bash

@@ -2,7 +2,7 @@
 
 One file describes each controller: `controllers/<slug>/mapping.yaml`. `python tools/b2bmap.py build` turns it into importable presets and mapping tables, and `check` validates it. You write no code. For a worked example, read [the DDJ-FLX4 mapping](../controllers/ddj-flx4/mapping.yaml).
 
-To start fast, run `python tools/b2bmap.py new` and then `learn`, which writes most of this file as you press controls. See [CONTRIBUTING.md](../CONTRIBUTING.md).
+To start fast, run `python tools/b2bmap.py new` and then `learn`, which writes most of this file as you press controls. If you already have a preset exported from B2B Studio, run `python tools/b2bmap.py import <file> <slug>` instead. See [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## A minimal file
 
