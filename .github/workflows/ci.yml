@@ -9,6 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  yaml:
+    name: YAML lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install yamllint
+      # Rules live in .yamllint.yml. Covers every mapping.yaml and every workflow.
+      - run: yamllint --strict .
+
   check:
     name: Check (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}

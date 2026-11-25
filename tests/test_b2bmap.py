@@ -272,6 +272,48 @@ class Import(unittest.TestCase):
                 self.assertEqual(src["src"], body["src"], target)
                 self.assertEqual(opts, want, target)
 
+    def test_autodoc_describes_the_app_control(self):
+        cases = {
+            "d0@cdj-3000x:play": "Deck 1: PLAY / PAUSE.",
+            "d1@cdj-3000x:jog/touch": "Deck 2: JOG WHEEL (touch).",
+            "mx@djm-a9:ch2.fader": "Mixer channel 3: CHANNEL FADER.",
+            "d1@cdj-3000x:hotcue3": "Deck 2: HOT CUE D.",
+            "d0@cdj-3000x:cuecall_l": "Deck 1: CUE/LOOP CALL (left).",
+            "mx@djm-a9:fx.ch1": "Mixer: BEAT FX channel 2 select.",
+            "mx@djm-a9:ch1.input": "Mixer channel 2: INPUT SELECT · CH 2.",
+            "d0@cdj-3000x:screen/loop=0.3333333333333333": "Deck 1: sets a 1/3-beat loop, or resizes the active one.",
+            "d1@cdj-3000x:screen/loop=16": "Deck 2: sets a 16-beat loop, or resizes the active one.",
+            "d0@cdj-3000x:screen/jump=-0.5": "Deck 1: jumps 1/2 beat(s) back.",
+            "d0@cdj-3000x:screen/key=-2": "Deck 1: shifts the key by -2 semitone(s).",
+            "d0@cdj-3000x:screen/key=0": "Deck 1: resets the key shift.",
+        }
+        for target, want in cases.items():
+            self.assertEqual(b2bmap.autodoc(target, REGISTRY), want, target)
+
+    def test_every_autodoc_survives_the_template_engine(self):
+        """A drafted description is parsed as a template, so it must never contain stray braces."""
+        for spec_name, spec in REGISTRY["specs"].items():
+            unit = "mx" if spec["units"] == "mx" else "d0"
+            for cid in list(spec["controls"]) + list(spec.get("extra", {})):
+                target = f"{unit}@{spec_name}:{cid.replace('{n}', '1')}"
+                text = b2bmap.autodoc(target, REGISTRY)
+                if text:
+                    self.assertEqual(b2bmap.fmt(text, {}, target), text)
+
+    def test_autodoc_stays_quiet_when_unsure(self):
+        for target in ("d0@cdj-3000x:nope", "x@unknown:thing", "not a target",
+                       "d0@cdj-3000x:screen/loop=abc", "d0@cdj-3000x:screen/needle"):
+            self.assertIsNone(b2bmap.autodoc(target, REGISTRY), target)
+
+    def test_import_drafts_what_it_can_and_leaves_a_todo_for_the_rest(self):
+        preset = exported({"d0@cdj-3000x:play": {"src": "Pad|note|0|11"}, "d0@cdj-3000x:screen/needle": {"src": "Pad|note|0|12"}})
+        _, _, text, _, notes = b2bmap.convert_preset(preset, registry=REGISTRY)
+        self.assertIn("Deck 1: PLAY / PAUSE.", text)
+        self.assertEqual(text.count(b2bmap.TODO_DOC), 1)
+        self.assertTrue(any("drafted" in n for n in notes))
+        _, _, plain, _, _ = b2bmap.convert_preset(preset)
+        self.assertEqual(plain.count(b2bmap.TODO_DOC), 2)
+
     def test_command_writes_the_controller_folder(self):
         import json
         with tempfile.TemporaryDirectory() as tmp:

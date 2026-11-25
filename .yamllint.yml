@@ -1,0 +1,21 @@
+extends: default
+
+rules:
+  # Mappings and workflows carry long target names and shell lines.
+  line-length: disable
+  # GitHub Actions uses `on:` as a key.
+  truthy:
+    check-keys: false
+  comments:
+    min-spaces-from-content: 2
+  comments-indentation: {}
+  document-start: disable
+  # Git normalises line endings (.gitattributes), so a Windows checkout may hold CRLF.
+  new-lines: disable
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  braces:
+    max-spaces-inside: 0
+  empty-lines:
+    max: 1
