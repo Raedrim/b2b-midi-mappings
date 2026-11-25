@@ -1,0 +1,21 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+    authors:
+      - dependabot
+  categories:
+    - title: New controllers
+      labels:
+        - new-controller
+    - title: Mapping changes and fixes
+      labels:
+        - mapping
+        - bug
+    - title: Tools and documentation
+      labels:
+        - tools
+        - documentation
+    - title: Other changes
+      labels:
+        - "*"

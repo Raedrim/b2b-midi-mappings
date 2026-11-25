@@ -1,0 +1,9 @@
+mapping:
+  - changed-files:
+      - any-glob-to-any-file: "controllers/**"
+tools:
+  - changed-files:
+      - any-glob-to-any-file: ["tools/**", "tests/**", ".github/workflows/**"]
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "*.md"]

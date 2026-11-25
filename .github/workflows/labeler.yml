@@ -1,0 +1,16 @@
+name: Label pull requests
+
+# Labels feed the grouped release notes (.github/release.yml). pull_request_target is the supported
+# way to label PRs from forks; this workflow never checks out or runs the PR's code.
+on:
+  pull_request_target:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v7

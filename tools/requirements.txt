@@ -1,0 +1,5 @@
+# Needed to build and check the mappings (`python tools/b2bmap.py build` / `check`).
+pyyaml>=6
+# Only needed for `python tools/b2bmap.py learn`, which reads your controller.
+mido>=1.3
+python-rtmidi>=1.5

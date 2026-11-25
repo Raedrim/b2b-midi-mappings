@@ -1,0 +1,53 @@
+name: B2B Studio drift
+
+# B2B Studio can change its control ids at any time. Once a week, check that every control our mappings
+# use is still in the app's public web client, and keep one open issue up to date if something is gone.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Compare with the live client
+        id: drift
+        run: |
+          set +e
+          python tools/check_drift.py | tee drift.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+      - name: Open or update the drift issue
+        if: steps.drift.outputs.code == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "B2B Studio no longer contains some controls that our mappings bind to. Presets that use them will stop working for those controls."
+            echo
+            echo "This was found by the weekly check (\`tools/check_drift.py\`) on $(date -u +%Y-%m-%d). It reads a minified client, so please confirm in the app before changing a mapping."
+            echo
+            cat drift.txt
+          } > issue.md
+          gh label create b2b-drift --description "B2B Studio changed a control id" --color d93f0b --force
+          existing=$(gh issue list --label b2b-drift --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file issue.md
+          else
+            gh issue create --title "B2B Studio controls used by the mappings have gone missing" \
+              --label b2b-drift --body-file issue.md
+          fi
+      - name: Could not read the client
+        if: steps.drift.outputs.code == '2'
+        run: |
+          echo "::warning::The B2B Studio client could not be read or no longer looks as expected. This is not reported as drift."
+          exit 1

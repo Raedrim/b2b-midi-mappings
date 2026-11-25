@@ -1,0 +1,31 @@
+name: Release
+
+# Push a tag such as v1.0.0 to publish a release. Tags with a dash (v1.0.0-rc1) become pre-releases.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml mido
+      - run: python tools/b2bmap.py check
+      - run: python -m unittest discover tests
+      - name: Package
+        run: python tools/package.py "$GITHUB_REF_NAME"
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=""
+          case "$GITHUB_REF_NAME" in *-*) flags="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "$GITHUB_REF_NAME" --generate-notes $flags

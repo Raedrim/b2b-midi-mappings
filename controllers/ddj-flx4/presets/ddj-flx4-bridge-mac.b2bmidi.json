@@ -1,0 +1,877 @@
+{
+  "app": "B2B Studio",
+  "kind": "midi-preset",
+  "version": 1,
+  "name": "FLX4 (bridge, macOS)",
+  "_readme": [
+    "Bridge profile: run flx4_bridge.py BEFORE launching B2B Studio, then import this file. Every binding reads from the MIDI input named \"DDJ-FLX4\". See the README.",
+    "DDJ-FLX4 preset for B2B Studio. LEFT deck = d0 (Deck 1, mixer ch0), RIGHT deck = d1 (Deck 2, mixer ch1).",
+    "To claim other decks: find & replace in this file. Deck number N is d(N-1) and mixer channel (N-1).",
+    "Example for Deck 3 on the left and Deck 4 on the right - do these in THIS order so nothing collides:",
+    "  1) d1@  ->  d3@   and   mx@djm-a9:ch1.  ->  mx@djm-a9:ch3.",
+    "  2) d0@  ->  d2@   and   mx@djm-a9:ch0.  ->  mx@djm-a9:ch2.",
+    "Leave everything else alone (mx@djm-a9:xf.pos, fx.*, hpa.* are shared by both sides).",
+    "Hot cue delete: hold SHIFT+CUE, release SHIFT, tap the pad.",
+    "Each binding has a \"doc\" or \"why\" note explaining it; B2B Studio ignores it. Notes starting with CUSTOM mean the controller has no matching control, so the mapping is a judgement call."
+  ],
+  "bindings": {
+    "d0@cdj-3000x:play": {
+      "src": "DDJ-FLX4|note|0|11",
+      "doc": "PLAY/PAUSE button. 1:1 with the CDJ PLAY/PAUSE."
+    },
+    "d0@cdj-3000x:cue": {
+      "src": "DDJ-FLX4|note|0|12",
+      "doc": "CUE button. 1:1 with the CDJ CUE."
+    },
+    "d0@cdj-3000x:beatsync": {
+      "src": "DDJ-FLX4|note|0|88",
+      "doc": "SYNC button. 1:1 with the CDJ BEAT SYNC."
+    },
+    "d0@cdj-3000x:master": {
+      "src": "DDJ-FLX4|note|0|92",
+      "doc": "CUSTOM: the FLX4 has no MASTER button. SYNC long-press (note 0x5C) makes this deck the sync master, which is what the CDJ MASTER button does."
+    },
+    "d0@cdj-3000x:temporange": {
+      "src": "DDJ-FLX4|note|0|96",
+      "doc": "CUSTOM: SHIFT+SYNC cycles the tempo range, standing in for the CDJ TEMPO RANGE button."
+    },
+    "d0@cdj-3000x:direction/sliprev": {
+      "src": "DDJ-FLX4|note|0|14",
+      "doc": "CUSTOM: the FLX4 has no reverse lever. SHIFT+PLAY (Pioneer's reverse roll / censor) drives the CDJ slip-reverse lever position."
+    },
+    "d0@cdj-3000x:trackback": {
+      "src": "DDJ-FLX4|note|0|72",
+      "doc": "CUSTOM: SHIFT+CUE jumps to the start of the track, matching the CDJ TRACK SEARCH |<< button (the FLX4 has no track search buttons)."
+    },
+    "d0@cdj-3000x:calldelete": {
+      "src": "DDJ-FLX4|note|0|104",
+      "doc": "CUSTOM: the CDJ CALL/DELETE modifier. Hold SHIFT+CUE (note 0x68), let go of SHIFT, then tap a hot cue pad to delete that hot cue. Needed because SHIFT+pad is a different MIDI channel and can't reach the hot cue itself. Not yet verified on hardware."
+    },
+    "d0@cdj-3000x:loopin": {
+      "src": "DDJ-FLX4|note|0|16",
+      "doc": "LOOP IN / 4 BEAT button. 1:1 with the CDJ LOOP IN."
+    },
+    "d0@cdj-3000x:loopout": {
+      "src": "DDJ-FLX4|note|0|17",
+      "doc": "LOOP OUT button. 1:1 with the CDJ LOOP OUT."
+    },
+    "d0@cdj-3000x:reloop": {
+      "src": "DDJ-FLX4|note|0|77",
+      "doc": "RELOOP/EXIT button. 1:1 with the CDJ RELOOP/EXIT."
+    },
+    "d0@cdj-3000x:beatloop4": {
+      "src": "DDJ-FLX4|note|0|81",
+      "doc": "CUSTOM: CUE/LOOP CALL < halves the active loop. On a CDJ this is the 4 BEAT LOOP (1/2X) button; the FLX4 has neither, so its CALL arrows take the halve/double job."
+    },
+    "d0@cdj-3000x:beatloop8": {
+      "src": "DDJ-FLX4|note|0|83",
+      "doc": "CUSTOM: CUE/LOOP CALL > doubles the active loop (CDJ 8 BEAT LOOP / 2X)."
+    },
+    "d0@cdj-3000x:cuecall_l": {
+      "src": "DDJ-FLX4|note|0|62",
+      "doc": "CUSTOM: SHIFT+CUE/LOOP CALL < jumps to the previous memory cue (CDJ CUE/LOOP CALL <)."
+    },
+    "d0@cdj-3000x:cuecall_r": {
+      "src": "DDJ-FLX4|note|0|61",
+      "doc": "CUSTOM: SHIFT+CUE/LOOP CALL > jumps to the next memory cue (CDJ CUE/LOOP CALL >)."
+    },
+    "d0@cdj-3000x:jogtop": {
+      "src": "DDJ-FLX4|cc|0|34",
+      "rel": "binoff",
+      "doc": "Jog platter top while VINYL mode is on (scratch). Relative, binary-offset (centre 64). The vinyl-off platter message (cc 0x23) is not bound."
+    },
+    "d0@cdj-3000x:jog": {
+      "src": "DDJ-FLX4|cc|0|33",
+      "rel": "binoff",
+      "doc": "Jog side ring (pitch bend). Relative, binary-offset (centre 64)."
+    },
+    "d0@cdj-3000x:jog/touch": {
+      "src": "DDJ-FLX4|note|0|54",
+      "doc": "Platter touch sensor. Tells B2B Studio the platter is held so the top wheel scratches instead of bends."
+    },
+    "d0@cdj-3000x:tempo": {
+      "src": "DDJ-FLX4|cc|0|0",
+      "invert": true,
+      "doc": "TEMPO fader, 14-bit (B2B Studio pairs the LSB on cc 0x20 by itself). Inverted so pushing the fader up speeds up, like the app's own learn does."
+    },
+    "d0@cdj-3000x:rotary": {
+      "src": "DDJ-FLX4|cc|6|64",
+      "rel": "2c",
+      "doc": "CUSTOM: BROWSE knob turn, relative two's complement. The FLX4 has one browse knob shared by both decks, so the same message is bound to both decks' rotary and both browsers scroll if both are open."
+    },
+    "d0@cdj-3000x:browse": {
+      "src": "DDJ-FLX4|note|6|65",
+      "doc": "CUSTOM: BROWSE knob push, opens the browser on both decks (shared control, see rotary)."
+    },
+    "d0@cdj-3000x:back": {
+      "src": "DDJ-FLX4|note|6|66",
+      "doc": "CUSTOM: SHIFT+BROWSE push steps back out of a folder (CDJ BACK). Shared by both decks."
+    },
+    "d0@cdj-3000x:rotary/push": {
+      "src": "DDJ-FLX4|note|6|70",
+      "doc": "CUSTOM: the FLX4 LOAD 1 button. The CDJ has no LOAD button; it loads by pushing the rotary, so LOAD is bound to the rotary push."
+    },
+    "d0@cdj-3000x:hotcue0": {
+      "src": "DDJ-FLX4|note|7|0",
+      "doc": "Pad 1: hot cue A. 1:1 with CDJ HOT CUE A."
+    },
+    "d0@cdj-3000x:hotcue1": {
+      "src": "DDJ-FLX4|note|7|1",
+      "doc": "Pad 2: hot cue B. 1:1 with CDJ HOT CUE B."
+    },
+    "d0@cdj-3000x:hotcue2": {
+      "src": "DDJ-FLX4|note|7|2",
+      "doc": "Pad 3: hot cue C. 1:1 with CDJ HOT CUE C."
+    },
+    "d0@cdj-3000x:hotcue3": {
+      "src": "DDJ-FLX4|note|7|3",
+      "doc": "Pad 4: hot cue D. 1:1 with CDJ HOT CUE D."
+    },
+    "d0@cdj-3000x:hotcue4": {
+      "src": "DDJ-FLX4|note|7|4",
+      "doc": "Pad 5: hot cue E. 1:1 with CDJ HOT CUE E."
+    },
+    "d0@cdj-3000x:hotcue5": {
+      "src": "DDJ-FLX4|note|7|5",
+      "doc": "Pad 6: hot cue F. 1:1 with CDJ HOT CUE F."
+    },
+    "d0@cdj-3000x:hotcue6": {
+      "src": "DDJ-FLX4|note|7|6",
+      "doc": "Pad 7: hot cue G. 1:1 with CDJ HOT CUE G."
+    },
+    "d0@cdj-3000x:hotcue7": {
+      "src": "DDJ-FLX4|note|7|7",
+      "doc": "Pad 8: hot cue H. 1:1 with CDJ HOT CUE H."
+    },
+    "d0@cdj-3000x:screen/jump=-1": {
+      "src": "DDJ-FLX4|note|7|32",
+      "doc": "CUSTOM: pad 1 jumps 1 beat back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=1": {
+      "src": "DDJ-FLX4|note|7|33",
+      "doc": "CUSTOM: pad 2 jumps 1 beat forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=-2": {
+      "src": "DDJ-FLX4|note|7|34",
+      "doc": "CUSTOM: pad 3 jumps 2 beats back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=2": {
+      "src": "DDJ-FLX4|note|7|35",
+      "doc": "CUSTOM: pad 4 jumps 2 beats forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=-4": {
+      "src": "DDJ-FLX4|note|7|36",
+      "doc": "CUSTOM: pad 5 jumps 4 beats back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=4": {
+      "src": "DDJ-FLX4|note|7|37",
+      "doc": "CUSTOM: pad 6 jumps 4 beats forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=-8": {
+      "src": "DDJ-FLX4|note|7|38",
+      "doc": "CUSTOM: pad 7 jumps 8 beats back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=8": {
+      "src": "DDJ-FLX4|note|7|39",
+      "doc": "CUSTOM: pad 8 jumps 8 beats forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d0@cdj-3000x:screen/jump=-16": {
+      "src": "DDJ-FLX4|note|8|32",
+      "doc": "CUSTOM: SHIFT+pad 1 jumps 16 beats back (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/jump=16": {
+      "src": "DDJ-FLX4|note|8|33",
+      "doc": "CUSTOM: SHIFT+pad 2 jumps 16 beats forward (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/jump=-32": {
+      "src": "DDJ-FLX4|note|8|34",
+      "doc": "CUSTOM: SHIFT+pad 3 jumps 32 beats back (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/jump=32": {
+      "src": "DDJ-FLX4|note|8|35",
+      "doc": "CUSTOM: SHIFT+pad 4 jumps 32 beats forward (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/jump=-64": {
+      "src": "DDJ-FLX4|note|8|36",
+      "doc": "CUSTOM: SHIFT+pad 5 jumps 64 beats back (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/jump=64": {
+      "src": "DDJ-FLX4|note|8|37",
+      "doc": "CUSTOM: SHIFT+pad 6 jumps 64 beats forward (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/jump=-0.5": {
+      "src": "DDJ-FLX4|note|8|38",
+      "doc": "CUSTOM: SHIFT+pad 7 jumps 0.5 beats back (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/jump=0.5": {
+      "src": "DDJ-FLX4|note|8|39",
+      "doc": "CUSTOM: SHIFT+pad 8 jumps 0.5 beats forward (bigger jumps and a half beat)."
+    },
+    "d0@cdj-3000x:screen/loop=0.25": {
+      "src": "DDJ-FLX4|note|7|96",
+      "doc": "CUSTOM: pad 1 sets a 0.25-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=0.5": {
+      "src": "DDJ-FLX4|note|7|97",
+      "doc": "CUSTOM: pad 2 sets a 0.5-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=1": {
+      "src": "DDJ-FLX4|note|7|98",
+      "doc": "CUSTOM: pad 3 sets a 1-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=2": {
+      "src": "DDJ-FLX4|note|7|99",
+      "doc": "CUSTOM: pad 4 sets a 2-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=4": {
+      "src": "DDJ-FLX4|note|7|100",
+      "doc": "CUSTOM: pad 5 sets a 4-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=8": {
+      "src": "DDJ-FLX4|note|7|101",
+      "doc": "CUSTOM: pad 6 sets a 8-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=16": {
+      "src": "DDJ-FLX4|note|7|102",
+      "doc": "CUSTOM: pad 7 sets a 16-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=32": {
+      "src": "DDJ-FLX4|note|7|103",
+      "doc": "CUSTOM: pad 8 sets a 32-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d0@cdj-3000x:screen/loop=0.0625": {
+      "src": "DDJ-FLX4|note|7|80",
+      "doc": "CUSTOM: pad 1 sets a 0.0625-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/loop=0.125": {
+      "src": "DDJ-FLX4|note|7|81",
+      "doc": "CUSTOM: pad 2 sets a 0.125-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/loop=0.3333333333333333": {
+      "src": "DDJ-FLX4|note|7|82",
+      "doc": "CUSTOM: pad 3 sets a 0.333333-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/loop=0.75": {
+      "src": "DDJ-FLX4|note|7|83",
+      "doc": "CUSTOM: pad 4 sets a 0.75-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/loop=1.5": {
+      "src": "DDJ-FLX4|note|7|84",
+      "doc": "CUSTOM: pad 5 sets a 1.5-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/loop=3": {
+      "src": "DDJ-FLX4|note|7|85",
+      "doc": "CUSTOM: pad 6 sets a 3-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/loop=6": {
+      "src": "DDJ-FLX4|note|7|86",
+      "doc": "CUSTOM: pad 7 sets a 6-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/loop=9": {
+      "src": "DDJ-FLX4|note|7|87",
+      "doc": "CUSTOM: pad 8 sets a 9-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d0@cdj-3000x:screen/key=-1": {
+      "src": "DDJ-FLX4|note|7|112",
+      "doc": "CUSTOM: pad 1 shifts the key down 1 semitone."
+    },
+    "d0@cdj-3000x:screen/key=1": {
+      "src": "DDJ-FLX4|note|7|113",
+      "doc": "CUSTOM: pad 2 shifts the key up 1 semitone."
+    },
+    "d0@cdj-3000x:screen/key=-2": {
+      "src": "DDJ-FLX4|note|7|114",
+      "doc": "CUSTOM: pad 3 shifts the key down 2 semitones."
+    },
+    "d0@cdj-3000x:screen/key=2": {
+      "src": "DDJ-FLX4|note|7|115",
+      "doc": "CUSTOM: pad 4 shifts the key up 2 semitones."
+    },
+    "d0@cdj-3000x:screen/key=-3": {
+      "src": "DDJ-FLX4|note|7|116",
+      "doc": "CUSTOM: pad 5 shifts the key down 3 semitones."
+    },
+    "d0@cdj-3000x:screen/key=3": {
+      "src": "DDJ-FLX4|note|7|117",
+      "doc": "CUSTOM: pad 6 shifts the key up 3 semitones."
+    },
+    "d0@cdj-3000x:screen/key=0": {
+      "src": "DDJ-FLX4|note|7|118",
+      "doc": "CUSTOM: pad 7 resets the key."
+    },
+    "d0@cdj-3000x:keysync": {
+      "src": "DDJ-FLX4|note|7|119",
+      "doc": "CUSTOM: pad 8 matches the key to the other deck, or resets it (CDJ KEY SYNC)."
+    },
+    "d0@cdj-3000x:memory": {
+      "src": "DDJ-FLX4|note|7|48",
+      "doc": "CUSTOM: pad 1 saves a memory cue (or the active loop), the CDJ MEMORY button. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:delete": {
+      "src": "DDJ-FLX4|note|7|49",
+      "doc": "CUSTOM: pad 2 deletes the memory cue you are on, the CDJ DELETE button. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:slip": {
+      "src": "DDJ-FLX4|note|7|50",
+      "doc": "CUSTOM: pad 3 toggles SLIP. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:quantize": {
+      "src": "DDJ-FLX4|note|7|51",
+      "doc": "CUSTOM: pad 4 toggles QUANTIZE. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:mastertempo": {
+      "src": "DDJ-FLX4|note|7|52",
+      "doc": "CUSTOM: pad 5 toggles MASTER TEMPO (key lock). The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:temporeset": {
+      "src": "DDJ-FLX4|note|7|53",
+      "doc": "CUSTOM: pad 6 resets the tempo fader to 0%. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:vinylmode": {
+      "src": "DDJ-FLX4|note|7|54",
+      "doc": "CUSTOM: pad 7 switches the jog to VINYL mode. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:cdjmode": {
+      "src": "DDJ-FLX4|note|7|55",
+      "doc": "CUSTOM: pad 8 switches the jog to CDJ mode. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d0@cdj-3000x:trackfwd": {
+      "src": "DDJ-FLX4|note|8|48",
+      "doc": "CUSTOM: SHIFT+pad 1: next track (CDJ TRACK SEARCH >>|)."
+    },
+    "d0@cdj-3000x:searchback": {
+      "src": "DDJ-FLX4|note|8|49",
+      "doc": "CUSTOM: SHIFT+pad 2: fast-scan back (CDJ SEARCH <<)."
+    },
+    "d0@cdj-3000x:searchfwd": {
+      "src": "DDJ-FLX4|note|8|50",
+      "doc": "CUSTOM: SHIFT+pad 3: fast-scan forward (CDJ SEARCH >>)."
+    },
+    "d0@cdj-3000x:nudgeback": {
+      "src": "DDJ-FLX4|note|8|51",
+      "doc": "CUSTOM: SHIFT+pad 4: nudge the tempo down (CDJ NUDGE -)."
+    },
+    "d0@cdj-3000x:nudgefwd": {
+      "src": "DDJ-FLX4|note|8|52",
+      "doc": "CUSTOM: SHIFT+pad 5: nudge the tempo up (CDJ NUDGE +)."
+    },
+    "d0@cdj-3000x:direction/rev": {
+      "src": "DDJ-FLX4|note|8|53",
+      "doc": "CUSTOM: SHIFT+pad 6: reverse playback while held (CDJ reverse lever)."
+    },
+    "d0@cdj-3000x:screen/time": {
+      "src": "DDJ-FLX4|note|8|54",
+      "doc": "CUSTOM: SHIFT+pad 7: switches the time display between elapsed and remaining."
+    },
+    "mx@djm-a9:fx.freqLow": {
+      "src": "DDJ-FLX4|note|7|16",
+      "doc": "CUSTOM: left deck PAD FX 1, pad 1: Beat FX LOW band on/off (A9 LOW). The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+    },
+    "mx@djm-a9:fx.freqMid": {
+      "src": "DDJ-FLX4|note|7|17",
+      "doc": "CUSTOM: left deck PAD FX 1, pad 2: Beat FX MID band on/off (A9 MID). The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+    },
+    "mx@djm-a9:fx.freqHi": {
+      "src": "DDJ-FLX4|note|7|18",
+      "doc": "CUSTOM: left deck PAD FX 1, pad 3: Beat FX HI band on/off (A9 HI). The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+    },
+    "mx@djm-a9:fx.quantize": {
+      "src": "DDJ-FLX4|note|7|19",
+      "doc": "CUSTOM: left deck PAD FX 1, pad 4: Beat FX QUANTIZE on/off. The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+    },
+    "mx@djm-a9:fx.cfa": {
+      "src": "DDJ-FLX4|note|7|20",
+      "doc": "CUSTOM: left deck PAD FX 1, pad 5: puts every channel on crossfader side A in the Beat FX (CH SELECT CF.A). The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+    },
+    "mx@djm-a9:fx.cfb": {
+      "src": "DDJ-FLX4|note|7|21",
+      "doc": "CUSTOM: left deck PAD FX 1, pad 6: puts every channel on crossfader side B in the Beat FX (CH SELECT CF.B). The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+    },
+    "mx@djm-a9:fx.mst": {
+      "src": "DDJ-FLX4|note|7|22",
+      "doc": "CUSTOM: left deck PAD FX 1, pad 7: puts the Beat FX on the master output (CH SELECT MST). The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+    },
+    "mx@djm-a9:ch0.trim": {
+      "src": "DDJ-FLX4|cc|0|4",
+      "doc": "TRIM knob (14-bit). 1:1 with the A9 TRIM."
+    },
+    "mx@djm-a9:ch0.eqHi": {
+      "src": "DDJ-FLX4|cc|0|7",
+      "doc": "EQ HI knob (14-bit). 1:1."
+    },
+    "mx@djm-a9:ch0.eqMid": {
+      "src": "DDJ-FLX4|cc|0|11",
+      "doc": "EQ MID knob (14-bit). The A9 has a 2-band mid (HI MID / LO MID); this drives the app's single mid control."
+    },
+    "mx@djm-a9:ch0.eqLo": {
+      "src": "DDJ-FLX4|cc|0|15",
+      "doc": "EQ LOW knob (14-bit). 1:1."
+    },
+    "mx@djm-a9:ch0.fader": {
+      "src": "DDJ-FLX4|cc|0|19",
+      "doc": "Channel fader (14-bit). 1:1."
+    },
+    "mx@djm-a9:ch0.color": {
+      "src": "DDJ-FLX4|cc|6|23",
+      "doc": "CUSTOM: the FLX4's per-channel FILTER knob drives the A9 COLOR knob (same job, different name)."
+    },
+    "mx@djm-a9:ch0.cue": {
+      "src": "DDJ-FLX4|note|0|84",
+      "doc": "Headphone CUE button for this channel. 1:1 with the A9 CUE."
+    },
+    "d1@cdj-3000x:play": {
+      "src": "DDJ-FLX4|note|1|11",
+      "doc": "PLAY/PAUSE button. 1:1 with the CDJ PLAY/PAUSE."
+    },
+    "d1@cdj-3000x:cue": {
+      "src": "DDJ-FLX4|note|1|12",
+      "doc": "CUE button. 1:1 with the CDJ CUE."
+    },
+    "d1@cdj-3000x:beatsync": {
+      "src": "DDJ-FLX4|note|1|88",
+      "doc": "SYNC button. 1:1 with the CDJ BEAT SYNC."
+    },
+    "d1@cdj-3000x:master": {
+      "src": "DDJ-FLX4|note|1|92",
+      "doc": "CUSTOM: the FLX4 has no MASTER button. SYNC long-press (note 0x5C) makes this deck the sync master, which is what the CDJ MASTER button does."
+    },
+    "d1@cdj-3000x:temporange": {
+      "src": "DDJ-FLX4|note|1|96",
+      "doc": "CUSTOM: SHIFT+SYNC cycles the tempo range, standing in for the CDJ TEMPO RANGE button."
+    },
+    "d1@cdj-3000x:direction/sliprev": {
+      "src": "DDJ-FLX4|note|1|14",
+      "doc": "CUSTOM: the FLX4 has no reverse lever. SHIFT+PLAY (Pioneer's reverse roll / censor) drives the CDJ slip-reverse lever position."
+    },
+    "d1@cdj-3000x:trackback": {
+      "src": "DDJ-FLX4|note|1|72",
+      "doc": "CUSTOM: SHIFT+CUE jumps to the start of the track, matching the CDJ TRACK SEARCH |<< button (the FLX4 has no track search buttons)."
+    },
+    "d1@cdj-3000x:calldelete": {
+      "src": "DDJ-FLX4|note|1|104",
+      "doc": "CUSTOM: the CDJ CALL/DELETE modifier. Hold SHIFT+CUE (note 0x68), let go of SHIFT, then tap a hot cue pad to delete that hot cue. Needed because SHIFT+pad is a different MIDI channel and can't reach the hot cue itself. Not yet verified on hardware."
+    },
+    "d1@cdj-3000x:loopin": {
+      "src": "DDJ-FLX4|note|1|16",
+      "doc": "LOOP IN / 4 BEAT button. 1:1 with the CDJ LOOP IN."
+    },
+    "d1@cdj-3000x:loopout": {
+      "src": "DDJ-FLX4|note|1|17",
+      "doc": "LOOP OUT button. 1:1 with the CDJ LOOP OUT."
+    },
+    "d1@cdj-3000x:reloop": {
+      "src": "DDJ-FLX4|note|1|77",
+      "doc": "RELOOP/EXIT button. 1:1 with the CDJ RELOOP/EXIT."
+    },
+    "d1@cdj-3000x:beatloop4": {
+      "src": "DDJ-FLX4|note|1|81",
+      "doc": "CUSTOM: CUE/LOOP CALL < halves the active loop. On a CDJ this is the 4 BEAT LOOP (1/2X) button; the FLX4 has neither, so its CALL arrows take the halve/double job."
+    },
+    "d1@cdj-3000x:beatloop8": {
+      "src": "DDJ-FLX4|note|1|83",
+      "doc": "CUSTOM: CUE/LOOP CALL > doubles the active loop (CDJ 8 BEAT LOOP / 2X)."
+    },
+    "d1@cdj-3000x:cuecall_l": {
+      "src": "DDJ-FLX4|note|1|62",
+      "doc": "CUSTOM: SHIFT+CUE/LOOP CALL < jumps to the previous memory cue (CDJ CUE/LOOP CALL <)."
+    },
+    "d1@cdj-3000x:cuecall_r": {
+      "src": "DDJ-FLX4|note|1|61",
+      "doc": "CUSTOM: SHIFT+CUE/LOOP CALL > jumps to the next memory cue (CDJ CUE/LOOP CALL >)."
+    },
+    "d1@cdj-3000x:jogtop": {
+      "src": "DDJ-FLX4|cc|1|34",
+      "rel": "binoff",
+      "doc": "Jog platter top while VINYL mode is on (scratch). Relative, binary-offset (centre 64). The vinyl-off platter message (cc 0x23) is not bound."
+    },
+    "d1@cdj-3000x:jog": {
+      "src": "DDJ-FLX4|cc|1|33",
+      "rel": "binoff",
+      "doc": "Jog side ring (pitch bend). Relative, binary-offset (centre 64)."
+    },
+    "d1@cdj-3000x:jog/touch": {
+      "src": "DDJ-FLX4|note|1|54",
+      "doc": "Platter touch sensor. Tells B2B Studio the platter is held so the top wheel scratches instead of bends."
+    },
+    "d1@cdj-3000x:tempo": {
+      "src": "DDJ-FLX4|cc|1|0",
+      "invert": true,
+      "doc": "TEMPO fader, 14-bit (B2B Studio pairs the LSB on cc 0x20 by itself). Inverted so pushing the fader up speeds up, like the app's own learn does."
+    },
+    "d1@cdj-3000x:rotary": {
+      "src": "DDJ-FLX4|cc|6|64",
+      "rel": "2c",
+      "doc": "CUSTOM: BROWSE knob turn, relative two's complement. The FLX4 has one browse knob shared by both decks, so the same message is bound to both decks' rotary and both browsers scroll if both are open."
+    },
+    "d1@cdj-3000x:browse": {
+      "src": "DDJ-FLX4|note|6|65",
+      "doc": "CUSTOM: BROWSE knob push, opens the browser on both decks (shared control, see rotary)."
+    },
+    "d1@cdj-3000x:back": {
+      "src": "DDJ-FLX4|note|6|66",
+      "doc": "CUSTOM: SHIFT+BROWSE push steps back out of a folder (CDJ BACK). Shared by both decks."
+    },
+    "d1@cdj-3000x:rotary/push": {
+      "src": "DDJ-FLX4|note|6|71",
+      "doc": "CUSTOM: the FLX4 LOAD 2 button. The CDJ has no LOAD button; it loads by pushing the rotary, so LOAD is bound to the rotary push."
+    },
+    "d1@cdj-3000x:hotcue0": {
+      "src": "DDJ-FLX4|note|9|0",
+      "doc": "Pad 1: hot cue A. 1:1 with CDJ HOT CUE A."
+    },
+    "d1@cdj-3000x:hotcue1": {
+      "src": "DDJ-FLX4|note|9|1",
+      "doc": "Pad 2: hot cue B. 1:1 with CDJ HOT CUE B."
+    },
+    "d1@cdj-3000x:hotcue2": {
+      "src": "DDJ-FLX4|note|9|2",
+      "doc": "Pad 3: hot cue C. 1:1 with CDJ HOT CUE C."
+    },
+    "d1@cdj-3000x:hotcue3": {
+      "src": "DDJ-FLX4|note|9|3",
+      "doc": "Pad 4: hot cue D. 1:1 with CDJ HOT CUE D."
+    },
+    "d1@cdj-3000x:hotcue4": {
+      "src": "DDJ-FLX4|note|9|4",
+      "doc": "Pad 5: hot cue E. 1:1 with CDJ HOT CUE E."
+    },
+    "d1@cdj-3000x:hotcue5": {
+      "src": "DDJ-FLX4|note|9|5",
+      "doc": "Pad 6: hot cue F. 1:1 with CDJ HOT CUE F."
+    },
+    "d1@cdj-3000x:hotcue6": {
+      "src": "DDJ-FLX4|note|9|6",
+      "doc": "Pad 7: hot cue G. 1:1 with CDJ HOT CUE G."
+    },
+    "d1@cdj-3000x:hotcue7": {
+      "src": "DDJ-FLX4|note|9|7",
+      "doc": "Pad 8: hot cue H. 1:1 with CDJ HOT CUE H."
+    },
+    "d1@cdj-3000x:screen/jump=-1": {
+      "src": "DDJ-FLX4|note|9|32",
+      "doc": "CUSTOM: pad 1 jumps 1 beat back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=1": {
+      "src": "DDJ-FLX4|note|9|33",
+      "doc": "CUSTOM: pad 2 jumps 1 beat forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=-2": {
+      "src": "DDJ-FLX4|note|9|34",
+      "doc": "CUSTOM: pad 3 jumps 2 beats back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=2": {
+      "src": "DDJ-FLX4|note|9|35",
+      "doc": "CUSTOM: pad 4 jumps 2 beats forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=-4": {
+      "src": "DDJ-FLX4|note|9|36",
+      "doc": "CUSTOM: pad 5 jumps 4 beats back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=4": {
+      "src": "DDJ-FLX4|note|9|37",
+      "doc": "CUSTOM: pad 6 jumps 4 beats forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=-8": {
+      "src": "DDJ-FLX4|note|9|38",
+      "doc": "CUSTOM: pad 7 jumps 8 beats back. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=8": {
+      "src": "DDJ-FLX4|note|9|39",
+      "doc": "CUSTOM: pad 8 jumps 8 beats forward. Pads come in back/forward pairs of 1, 2, 4, 8."
+    },
+    "d1@cdj-3000x:screen/jump=-16": {
+      "src": "DDJ-FLX4|note|10|32",
+      "doc": "CUSTOM: SHIFT+pad 1 jumps 16 beats back (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/jump=16": {
+      "src": "DDJ-FLX4|note|10|33",
+      "doc": "CUSTOM: SHIFT+pad 2 jumps 16 beats forward (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/jump=-32": {
+      "src": "DDJ-FLX4|note|10|34",
+      "doc": "CUSTOM: SHIFT+pad 3 jumps 32 beats back (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/jump=32": {
+      "src": "DDJ-FLX4|note|10|35",
+      "doc": "CUSTOM: SHIFT+pad 4 jumps 32 beats forward (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/jump=-64": {
+      "src": "DDJ-FLX4|note|10|36",
+      "doc": "CUSTOM: SHIFT+pad 5 jumps 64 beats back (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/jump=64": {
+      "src": "DDJ-FLX4|note|10|37",
+      "doc": "CUSTOM: SHIFT+pad 6 jumps 64 beats forward (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/jump=-0.5": {
+      "src": "DDJ-FLX4|note|10|38",
+      "doc": "CUSTOM: SHIFT+pad 7 jumps 0.5 beats back (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/jump=0.5": {
+      "src": "DDJ-FLX4|note|10|39",
+      "doc": "CUSTOM: SHIFT+pad 8 jumps 0.5 beats forward (bigger jumps and a half beat)."
+    },
+    "d1@cdj-3000x:screen/loop=0.25": {
+      "src": "DDJ-FLX4|note|9|96",
+      "doc": "CUSTOM: pad 1 sets a 0.25-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=0.5": {
+      "src": "DDJ-FLX4|note|9|97",
+      "doc": "CUSTOM: pad 2 sets a 0.5-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=1": {
+      "src": "DDJ-FLX4|note|9|98",
+      "doc": "CUSTOM: pad 3 sets a 1-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=2": {
+      "src": "DDJ-FLX4|note|9|99",
+      "doc": "CUSTOM: pad 4 sets a 2-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=4": {
+      "src": "DDJ-FLX4|note|9|100",
+      "doc": "CUSTOM: pad 5 sets a 4-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=8": {
+      "src": "DDJ-FLX4|note|9|101",
+      "doc": "CUSTOM: pad 6 sets a 8-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=16": {
+      "src": "DDJ-FLX4|note|9|102",
+      "doc": "CUSTOM: pad 7 sets a 16-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=32": {
+      "src": "DDJ-FLX4|note|9|103",
+      "doc": "CUSTOM: pad 8 sets a 32-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+    },
+    "d1@cdj-3000x:screen/loop=0.0625": {
+      "src": "DDJ-FLX4|note|9|80",
+      "doc": "CUSTOM: pad 1 sets a 0.0625-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/loop=0.125": {
+      "src": "DDJ-FLX4|note|9|81",
+      "doc": "CUSTOM: pad 2 sets a 0.125-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/loop=0.3333333333333333": {
+      "src": "DDJ-FLX4|note|9|82",
+      "doc": "CUSTOM: pad 3 sets a 0.333333-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/loop=0.75": {
+      "src": "DDJ-FLX4|note|9|83",
+      "doc": "CUSTOM: pad 4 sets a 0.75-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/loop=1.5": {
+      "src": "DDJ-FLX4|note|9|84",
+      "doc": "CUSTOM: pad 5 sets a 1.5-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/loop=3": {
+      "src": "DDJ-FLX4|note|9|85",
+      "doc": "CUSTOM: pad 6 sets a 3-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/loop=6": {
+      "src": "DDJ-FLX4|note|9|86",
+      "doc": "CUSTOM: pad 7 sets a 6-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/loop=9": {
+      "src": "DDJ-FLX4|note|9|87",
+      "doc": "CUSTOM: pad 8 sets a 9-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+    },
+    "d1@cdj-3000x:screen/key=-1": {
+      "src": "DDJ-FLX4|note|9|112",
+      "doc": "CUSTOM: pad 1 shifts the key down 1 semitone."
+    },
+    "d1@cdj-3000x:screen/key=1": {
+      "src": "DDJ-FLX4|note|9|113",
+      "doc": "CUSTOM: pad 2 shifts the key up 1 semitone."
+    },
+    "d1@cdj-3000x:screen/key=-2": {
+      "src": "DDJ-FLX4|note|9|114",
+      "doc": "CUSTOM: pad 3 shifts the key down 2 semitones."
+    },
+    "d1@cdj-3000x:screen/key=2": {
+      "src": "DDJ-FLX4|note|9|115",
+      "doc": "CUSTOM: pad 4 shifts the key up 2 semitones."
+    },
+    "d1@cdj-3000x:screen/key=-3": {
+      "src": "DDJ-FLX4|note|9|116",
+      "doc": "CUSTOM: pad 5 shifts the key down 3 semitones."
+    },
+    "d1@cdj-3000x:screen/key=3": {
+      "src": "DDJ-FLX4|note|9|117",
+      "doc": "CUSTOM: pad 6 shifts the key up 3 semitones."
+    },
+    "d1@cdj-3000x:screen/key=0": {
+      "src": "DDJ-FLX4|note|9|118",
+      "doc": "CUSTOM: pad 7 resets the key."
+    },
+    "d1@cdj-3000x:keysync": {
+      "src": "DDJ-FLX4|note|9|119",
+      "doc": "CUSTOM: pad 8 matches the key to the other deck, or resets it (CDJ KEY SYNC)."
+    },
+    "d1@cdj-3000x:memory": {
+      "src": "DDJ-FLX4|note|9|48",
+      "doc": "CUSTOM: pad 1 saves a memory cue (or the active loop), the CDJ MEMORY button. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:delete": {
+      "src": "DDJ-FLX4|note|9|49",
+      "doc": "CUSTOM: pad 2 deletes the memory cue you are on, the CDJ DELETE button. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:slip": {
+      "src": "DDJ-FLX4|note|9|50",
+      "doc": "CUSTOM: pad 3 toggles SLIP. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:quantize": {
+      "src": "DDJ-FLX4|note|9|51",
+      "doc": "CUSTOM: pad 4 toggles QUANTIZE. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:mastertempo": {
+      "src": "DDJ-FLX4|note|9|52",
+      "doc": "CUSTOM: pad 5 toggles MASTER TEMPO (key lock). The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:temporeset": {
+      "src": "DDJ-FLX4|note|9|53",
+      "doc": "CUSTOM: pad 6 resets the tempo fader to 0%. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:vinylmode": {
+      "src": "DDJ-FLX4|note|9|54",
+      "doc": "CUSTOM: pad 7 switches the jog to VINYL mode. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:cdjmode": {
+      "src": "DDJ-FLX4|note|9|55",
+      "doc": "CUSTOM: pad 8 switches the jog to CDJ mode. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+    },
+    "d1@cdj-3000x:trackfwd": {
+      "src": "DDJ-FLX4|note|10|48",
+      "doc": "CUSTOM: SHIFT+pad 1: next track (CDJ TRACK SEARCH >>|)."
+    },
+    "d1@cdj-3000x:searchback": {
+      "src": "DDJ-FLX4|note|10|49",
+      "doc": "CUSTOM: SHIFT+pad 2: fast-scan back (CDJ SEARCH <<)."
+    },
+    "d1@cdj-3000x:searchfwd": {
+      "src": "DDJ-FLX4|note|10|50",
+      "doc": "CUSTOM: SHIFT+pad 3: fast-scan forward (CDJ SEARCH >>)."
+    },
+    "d1@cdj-3000x:nudgeback": {
+      "src": "DDJ-FLX4|note|10|51",
+      "doc": "CUSTOM: SHIFT+pad 4: nudge the tempo down (CDJ NUDGE -)."
+    },
+    "d1@cdj-3000x:nudgefwd": {
+      "src": "DDJ-FLX4|note|10|52",
+      "doc": "CUSTOM: SHIFT+pad 5: nudge the tempo up (CDJ NUDGE +)."
+    },
+    "d1@cdj-3000x:direction/rev": {
+      "src": "DDJ-FLX4|note|10|53",
+      "doc": "CUSTOM: SHIFT+pad 6: reverse playback while held (CDJ reverse lever)."
+    },
+    "d1@cdj-3000x:screen/time": {
+      "src": "DDJ-FLX4|note|10|54",
+      "doc": "CUSTOM: SHIFT+pad 7: switches the time display between elapsed and remaining."
+    },
+    "mx@djm-a9:scfx.space": {
+      "src": "DDJ-FLX4|note|9|16",
+      "doc": "CUSTOM: right deck PAD FX 1, pad 1: Sound Color FX type SPACE. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+    },
+    "mx@djm-a9:scfx.dubecho": {
+      "src": "DDJ-FLX4|note|9|17",
+      "doc": "CUSTOM: right deck PAD FX 1, pad 2: Sound Color FX type DUB ECHO. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+    },
+    "mx@djm-a9:scfx.crush": {
+      "src": "DDJ-FLX4|note|9|18",
+      "doc": "CUSTOM: right deck PAD FX 1, pad 3: Sound Color FX type CRUSH. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+    },
+    "mx@djm-a9:scfx.sweep": {
+      "src": "DDJ-FLX4|note|9|19",
+      "doc": "CUSTOM: right deck PAD FX 1, pad 4: Sound Color FX type SWEEP. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+    },
+    "mx@djm-a9:scfx.noise": {
+      "src": "DDJ-FLX4|note|9|20",
+      "doc": "CUSTOM: right deck PAD FX 1, pad 5: Sound Color FX type NOISE. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+    },
+    "mx@djm-a9:scfx.filter": {
+      "src": "DDJ-FLX4|note|9|21",
+      "doc": "CUSTOM: right deck PAD FX 1, pad 6: Sound Color FX type FILTER. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+    },
+    "mx@djm-a9:scfx.lockLamp": {
+      "src": "DDJ-FLX4|note|9|22",
+      "doc": "CUSTOM: right deck PAD FX 1, pad 7: Sound Color FX type CENTER LOCK. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+    },
+    "mx@djm-a9:ch1.trim": {
+      "src": "DDJ-FLX4|cc|1|4",
+      "doc": "TRIM knob (14-bit). 1:1 with the A9 TRIM."
+    },
+    "mx@djm-a9:ch1.eqHi": {
+      "src": "DDJ-FLX4|cc|1|7",
+      "doc": "EQ HI knob (14-bit). 1:1."
+    },
+    "mx@djm-a9:ch1.eqMid": {
+      "src": "DDJ-FLX4|cc|1|11",
+      "doc": "EQ MID knob (14-bit). The A9 has a 2-band mid (HI MID / LO MID); this drives the app's single mid control."
+    },
+    "mx@djm-a9:ch1.eqLo": {
+      "src": "DDJ-FLX4|cc|1|15",
+      "doc": "EQ LOW knob (14-bit). 1:1."
+    },
+    "mx@djm-a9:ch1.fader": {
+      "src": "DDJ-FLX4|cc|1|19",
+      "doc": "Channel fader (14-bit). 1:1."
+    },
+    "mx@djm-a9:ch1.color": {
+      "src": "DDJ-FLX4|cc|6|24",
+      "doc": "CUSTOM: the FLX4's per-channel FILTER knob drives the A9 COLOR knob (same job, different name)."
+    },
+    "mx@djm-a9:ch1.cue": {
+      "src": "DDJ-FLX4|note|1|84",
+      "doc": "Headphone CUE button for this channel. 1:1 with the A9 CUE."
+    },
+    "mx@djm-a9:xf.pos": {
+      "src": "DDJ-FLX4|cc|6|31",
+      "doc": "CROSSFADER (14-bit). 1:1."
+    },
+    "mx@djm-a9:hpa.mix": {
+      "src": "DDJ-FLX4|cc|6|12",
+      "doc": "CUSTOM: HEADPHONES MIXING knob drives the A9 phones A CUE/MIX. The A9 has a second headphone section that the FLX4 has no controls for."
+    },
+    "mx@djm-a9:hpa.level": {
+      "src": "DDJ-FLX4|cc|6|13",
+      "doc": "CUSTOM: HEADPHONES LEVEL knob drives the A9 phones A level (see above)."
+    },
+    "mx@djm-a9:fx.depth": {
+      "src": "DDJ-FLX4|cc|4|2",
+      "doc": "BEAT FX LEVEL/DEPTH knob. 1:1 with the A9 LEVEL/DEPTH."
+    },
+    "mx@djm-a9:fx.onoff": {
+      "src": "DDJ-FLX4|note|4|71",
+      "doc": "BEAT FX ON/OFF. Only the channel-4 message is bound; with the CH slider on CH2 the FLX4 may send channel 5 instead, which is not bound (one control can only have one source)."
+    },
+    "mx@djm-a9:fx.beatl": {
+      "src": "DDJ-FLX4|note|4|74",
+      "doc": "BEAT FX BEAT < (shorten the effect beat). 1:1 with the A9 BEAT <."
+    },
+    "mx@djm-a9:fx.beatr": {
+      "src": "DDJ-FLX4|note|4|75",
+      "doc": "BEAT FX BEAT > (lengthen the effect beat). 1:1 with the A9 BEAT >."
+    },
+    "mx@djm-a9:fx.ch0": {
+      "src": "DDJ-FLX4|note|4|16",
+      "doc": "BEAT FX CH SELECT slider at CH1 puts mixer channel 1 in the effect (exclusive). 1:1 with the A9 CH SELECT 1."
+    },
+    "mx@djm-a9:fx.ch1": {
+      "src": "DDJ-FLX4|note|5|17",
+      "doc": "BEAT FX CH SELECT slider at CH2 puts mixer channel 2 in the effect (exclusive). The slider's third position is not bound because its message is unknown."
+    },
+    "mx@djm-a9:fx.tap": {
+      "src": "DDJ-FLX4|note|4|99",
+      "doc": "CUSTOM: the FX SELECT button taps the effect tempo (A9 TAP). The A9 FX SELECT is a knob that takes an absolute position, so a button can't step through effects; see fx.select."
+    },
+    "mx@djm-a9:fx.autotap": {
+      "src": "DDJ-FLX4|note|4|100",
+      "doc": "CUSTOM: SHIFT+FX SELECT toggles AUTO/TAP (A9 AUTO/TAP)."
+    },
+    "mx@djm-a9:fx.select": {
+      "src": "DDJ-FLX4|cc|6|100",
+      "rel": "2c",
+      "sens": 5,
+      "doc": "CUSTOM: SHIFT+BROWSE turn picks the effect, because the FLX4 has no FX select knob. Relative, sensitivity 5 so one click is about one of the 14 effects."
+    }
+  }
+}

@@ -1,0 +1,303 @@
+# Pioneer DDJ-FLX4 -> CDJ-3000X + DJM-A9 in B2B Studio.
+# Format: docs/MAPPING-FORMAT.md. Generate the presets and tables with: python tools/b2bmap.py build
+#
+# doc: = a 1:1 mapping.  why: = a judgement call (the FLX4 has no matching control); say why.
+name: "Pioneer DDJ-FLX4"
+
+profiles:
+  direct:
+    title: "FLX4 (direct)"
+    port: "DDJ-FLX4"
+    docs: true
+    tags: [direct]
+    readme:
+      - "Direct profile: run flx4_wake.py BEFORE launching B2B Studio, then import this file. The controller stays in HOT CUE pad mode. See the README."
+  bridge-windows:
+    title: "FLX4 (bridge, Windows)"
+    port: "FLX4 Bridge"
+    docs: true
+    tags: [bridge]
+    readme:
+      - 'Bridge profile: run flx4_bridge.py BEFORE launching B2B Studio, then import this file. Every binding reads from the MIDI input named "{port}". See the README.'
+  bridge-mac:
+    title: "FLX4 (bridge, macOS)"
+    port: "DDJ-FLX4"
+    tags: [bridge]
+    readme:
+      - 'Bridge profile: run flx4_bridge.py BEFORE launching B2B Studio, then import this file. Every binding reads from the MIDI input named "{port}". See the README.'
+
+readme:
+  - "DDJ-FLX4 preset for B2B Studio. LEFT deck = d0 (Deck 1, mixer ch0), RIGHT deck = d1 (Deck 2, mixer ch1)."
+  - "To claim other decks: find & replace in this file. Deck number N is d(N-1) and mixer channel (N-1)."
+  - "Example for Deck 3 on the left and Deck 4 on the right - do these in THIS order so nothing collides:"
+  - "  1) d1@  ->  d3@   and   mx@djm-a9:ch1.  ->  mx@djm-a9:ch3."
+  - "  2) d0@  ->  d2@   and   mx@djm-a9:ch0.  ->  mx@djm-a9:ch2."
+  - "Leave everything else alone (mx@djm-a9:xf.pos, fx.*, hpa.* are shared by both sides)."
+  - "Hot cue delete: hold SHIFT+CUE, release SHIFT, tap the pad."
+
+# The FLX4 only talks once the host sends this SysEx (found by the Mixxx team). `learn` sends it too.
+wake:
+  sysex: "00 40 05 00 00 04 05 00 50 02"
+  interval: 2
+
+decks:
+  - {d: 0, n: 1, side: left,  ch: 0, pad: 7, spad: 8}
+  - {d: 1, n: 2, side: right, ch: 1, pad: 9, spad: 10}
+
+# Keep 'bindings' as the last key: `learn` appends to the end of the file.
+bindings:
+  - for: decks
+    bindings:
+      # ------------------------------------------------------------ transport
+      - section: "Deck {n} ({side}) - transport"
+      - {target: "d{d}@cdj-3000x:play", msg: "note {ch} 0x0B", doc: "PLAY/PAUSE button. 1:1 with the CDJ PLAY/PAUSE."}
+      - {target: "d{d}@cdj-3000x:cue", msg: "note {ch} 0x0C", doc: "CUE button. 1:1 with the CDJ CUE."}
+      - {target: "d{d}@cdj-3000x:beatsync", msg: "note {ch} 0x58", doc: "SYNC button. 1:1 with the CDJ BEAT SYNC."}
+      - target: "d{d}@cdj-3000x:master"
+        msg: "note {ch} 0x5C"
+        why: "the FLX4 has no MASTER button. SYNC long-press (note 0x5C) makes this deck the sync master, which is what the CDJ MASTER button does."
+      - target: "d{d}@cdj-3000x:temporange"
+        msg: "note {ch} 0x60"
+        why: "SHIFT+SYNC cycles the tempo range, standing in for the CDJ TEMPO RANGE button."
+      - target: "d{d}@cdj-3000x:direction/sliprev"
+        msg: "note {ch} 0x0E"
+        why: "the FLX4 has no reverse lever. SHIFT+PLAY (Pioneer's reverse roll / censor) drives the CDJ slip-reverse lever position."
+      - target: "d{d}@cdj-3000x:trackback"
+        msg: "note {ch} 0x48"
+        why: "SHIFT+CUE jumps to the start of the track, matching the CDJ TRACK SEARCH |<< button (the FLX4 has no track search buttons)."
+      - target: "d{d}@cdj-3000x:calldelete"
+        msg: "note {ch} 0x68"
+        why: "the CDJ CALL/DELETE modifier. Hold SHIFT+CUE (note 0x68), let go of SHIFT, then tap a hot cue pad to delete that hot cue. Needed because SHIFT+pad is a different MIDI channel and can't reach the hot cue itself. Not yet verified on hardware."
+
+      # ---------------------------------------------------------------- loops
+      - section: "Deck {n} ({side}) - loops"
+      - {target: "d{d}@cdj-3000x:loopin", msg: "note {ch} 0x10", doc: "LOOP IN / 4 BEAT button. 1:1 with the CDJ LOOP IN."}
+      - {target: "d{d}@cdj-3000x:loopout", msg: "note {ch} 0x11", doc: "LOOP OUT button. 1:1 with the CDJ LOOP OUT."}
+      - {target: "d{d}@cdj-3000x:reloop", msg: "note {ch} 0x4D", doc: "RELOOP/EXIT button. 1:1 with the CDJ RELOOP/EXIT."}
+      - target: "d{d}@cdj-3000x:beatloop4"
+        msg: "note {ch} 0x51"
+        why: "CUE/LOOP CALL < halves the active loop. On a CDJ this is the 4 BEAT LOOP (1/2X) button; the FLX4 has neither, so its CALL arrows take the halve/double job."
+      - target: "d{d}@cdj-3000x:beatloop8"
+        msg: "note {ch} 0x53"
+        why: "CUE/LOOP CALL > doubles the active loop (CDJ 8 BEAT LOOP / 2X)."
+      - target: "d{d}@cdj-3000x:cuecall_l"
+        msg: "note {ch} 0x3E"
+        why: "SHIFT+CUE/LOOP CALL < jumps to the previous memory cue (CDJ CUE/LOOP CALL <)."
+      - target: "d{d}@cdj-3000x:cuecall_r"
+        msg: "note {ch} 0x3D"
+        why: "SHIFT+CUE/LOOP CALL > jumps to the next memory cue (CDJ CUE/LOOP CALL >)."
+
+      # ------------------------------------------------------- jog and tempo
+      - section: "Deck {n} ({side}) - jog and tempo"
+      - target: "d{d}@cdj-3000x:jogtop"
+        msg: "cc {ch} 0x22"
+        opts: {rel: binoff}
+        doc: "Jog platter top while VINYL mode is on (scratch). Relative, binary-offset (centre 64). The vinyl-off platter message (cc 0x23) is not bound."
+      - target: "d{d}@cdj-3000x:jog"
+        msg: "cc {ch} 0x21"
+        opts: {rel: binoff}
+        doc: "Jog side ring (pitch bend). Relative, binary-offset (centre 64)."
+      - target: "d{d}@cdj-3000x:jog/touch"
+        msg: "note {ch} 0x36"
+        doc: "Platter touch sensor. Tells B2B Studio the platter is held so the top wheel scratches instead of bends."
+      - target: "d{d}@cdj-3000x:tempo"
+        msg: "cc {ch} 0x00"
+        opts: {invert: true}
+        doc: "TEMPO fader, 14-bit (B2B Studio pairs the LSB on cc 0x20 by itself). Inverted so pushing the fader up speeds up, like the app's own learn does."
+
+      # ------------------------------------------------------ browse and load
+      - section: "Deck {n} ({side}) - browse and load"
+      - target: "d{d}@cdj-3000x:rotary"
+        msg: "cc 6 0x40"
+        opts: {rel: "2c"}
+        share: true
+        why: "BROWSE knob turn, relative two's complement. The FLX4 has one browse knob shared by both decks, so the same message is bound to both decks' rotary and both browsers scroll if both are open."
+      - target: "d{d}@cdj-3000x:browse"
+        msg: "note 6 0x41"
+        share: true
+        why: "BROWSE knob push, opens the browser on both decks (shared control, see rotary)."
+      - target: "d{d}@cdj-3000x:back"
+        msg: "note 6 0x42"
+        share: true
+        why: "SHIFT+BROWSE push steps back out of a folder (CDJ BACK). Shared by both decks."
+      - target: "d{d}@cdj-3000x:rotary/push"
+        msg: "note 6 0x46+{d}"
+        why: "the FLX4 LOAD {n} button. The CDJ has no LOAD button; it loads by pushing the rotary, so LOAD is bound to the rotary push."
+
+      # ===================== direct profile: controller stays in HOT CUE mode
+      - section: "Deck {n} ({side}) - pads (controller stays in HOT CUE mode)"
+      - {target: "d{d}@cdj-3000x:hotcue{i}", msg: "note {pad} {i}", repeat: 8, only: direct, doc: "Pad {i1}: hot cue {letter}. 1:1 with CDJ HOT CUE {letter}."}
+      - target: "d{d}@cdj-3000x:screen/loop={v}"
+        msg: "note {spad} {i}"
+        only: direct
+        items: [1, 2, 4, 8]
+        why: "SHIFT+pad {i1} sets a {v}-beat loop (resizes it if one is already active). Stands in for the FLX4's BEAT LOOP pad mode, which can't be reached without the bridge."
+      - target: "d{d}@cdj-3000x:screen/jump={v}"
+        msg: "note {spad} 4+{i}"
+        only: direct
+        items:
+          - {v: -4, p: 5, t: "4 beats back"}
+          - {v: 4, p: 6, t: "4 beats forward"}
+          - {v: -16, p: 7, t: "16 beats back"}
+          - {v: 16, p: 8, t: "16 beats forward"}
+        why: "SHIFT+pad {p} jumps {t}. Stands in for the FLX4's BEAT JUMP pad mode, which can't be reached without the bridge."
+
+      - section: "Deck {n} ({side}) - pad-mode buttons reused as plain buttons"
+      - {target: "d{d}@cdj-3000x:memory", msg: "note {ch} 0x1B", only: direct, why: "HOT CUE mode button saves a memory cue (or the active loop). Without the bridge the pad modes can't be switched, but the buttons still send a note, so they're free for the CDJ MEMORY job."}
+      - {target: "d{d}@cdj-3000x:slip", msg: "note {ch} 0x1E", only: direct, why: "PAD FX 1 mode button toggles SLIP (CDJ SLIP)."}
+      - {target: "d{d}@cdj-3000x:beatjumpl", msg: "note {ch} 0x20", only: direct, why: "BEAT JUMP mode button jumps back by the app's current beat-jump size (CDJ BEAT JUMP <)."}
+      - {target: "d{d}@cdj-3000x:beatjumpr", msg: "note {ch} 0x22", only: direct, why: "SAMPLER mode button jumps forward by the app's current beat-jump size (CDJ BEAT JUMP >)."}
+      - {target: "d{d}@cdj-3000x:screen/key=-1", msg: "note {ch} 0x69", only: direct, why: "SHIFT+HOT CUE mode button (KEYBOARD) shifts the key down one semitone."}
+      - {target: "d{d}@cdj-3000x:screen/key=1", msg: "note {ch} 0x6B", only: direct, why: "SHIFT+PAD FX 1 mode button (PAD FX 2) shifts the key up one semitone."}
+      - {target: "d{d}@cdj-3000x:quantize", msg: "note {ch} 0x6D", only: direct, why: "SHIFT+BEAT JUMP mode button (BEAT LOOP) toggles QUANTIZE (CDJ QUANTIZE)."}
+      - {target: "d{d}@cdj-3000x:keysync", msg: "note {ch} 0x6F", only: direct, why: "SHIFT+SAMPLER mode button (KEY SHIFT) matches the key to the other deck, or resets it (CDJ KEY SYNC)."}
+
+      # ============= bridge profiles: flx4_bridge.py switches the pad modes
+      - section: "Deck {n} ({side}) - HOT CUE mode"
+      - {target: "d{d}@cdj-3000x:hotcue{i}", msg: "note {pad} {i}", repeat: 8, only: bridge, doc: "Pad {i1}: hot cue {letter}. 1:1 with CDJ HOT CUE {letter}."}
+
+      - section: "Deck {n} ({side}) - BEAT JUMP mode"
+      - target: "d{d}@cdj-3000x:screen/jump={v}"
+        msg: "note {pad} 0x20+{i}"
+        only: bridge
+        items:
+          - {v: -1, t: "1 beat back"}
+          - {v: 1, t: "1 beat forward"}
+          - {v: -2, t: "2 beats back"}
+          - {v: 2, t: "2 beats forward"}
+          - {v: -4, t: "4 beats back"}
+          - {v: 4, t: "4 beats forward"}
+          - {v: -8, t: "8 beats back"}
+          - {v: 8, t: "8 beats forward"}
+        why: "pad {i1} jumps {t}. Pads come in back/forward pairs of 1, 2, 4, 8."
+      - target: "d{d}@cdj-3000x:screen/jump={v}"
+        msg: "note {spad} 0x20+{i}"
+        only: bridge
+        items:
+          - {v: -16, t: "16 beats back"}
+          - {v: 16, t: "16 beats forward"}
+          - {v: -32, t: "32 beats back"}
+          - {v: 32, t: "32 beats forward"}
+          - {v: -64, t: "64 beats back"}
+          - {v: 64, t: "64 beats forward"}
+          - {v: -0.5, t: "0.5 beats back"}
+          - {v: 0.5, t: "0.5 beats forward"}
+        why: "SHIFT+pad {i1} jumps {t} (bigger jumps and a half beat)."
+
+      - section: "Deck {n} ({side}) - BEAT LOOP mode"
+      - target: "d{d}@cdj-3000x:screen/loop={v}"
+        msg: "note {pad} 0x60+{i}"
+        only: bridge
+        items: [0.25, 0.5, 1, 2, 4, 8, 16, 32]
+        why: "pad {i1} sets a {v}-beat loop, or resizes the active loop. B2B Studio takes any loop length through the CDJ's screen target."
+
+      - section: "Deck {n} ({side}) - PAD FX 2 mode (odd loop sizes)"
+      - target: "d{d}@cdj-3000x:screen/loop={v}"
+        msg: "note {pad} 0x50+{i}"
+        only: bridge
+        items: [0.0625, 0.125, 0.3333333333333333, 0.75, 1.5, 3, 6, 9]
+        why: "pad {i1} sets a {v:g}-beat loop, one of the odd sizes on the CDJ-3000's loop screen."
+
+      - section: "Deck {n} ({side}) - KEY SHIFT mode"
+      - target: "d{d}@cdj-3000x:screen/key={v}"
+        msg: "note {pad} 0x70+{i}"
+        only: bridge
+        items:
+          - {v: -1, t: "shifts the key down 1 semitone"}
+          - {v: 1, t: "shifts the key up 1 semitone"}
+          - {v: -2, t: "shifts the key down 2 semitones"}
+          - {v: 2, t: "shifts the key up 2 semitones"}
+          - {v: -3, t: "shifts the key down 3 semitones"}
+          - {v: 3, t: "shifts the key up 3 semitones"}
+          - {v: 0, t: "resets the key"}
+        why: "pad {i1} {t}."
+      - {target: "d{d}@cdj-3000x:keysync", msg: "note {pad} 0x77", only: bridge, why: "pad 8 matches the key to the other deck, or resets it (CDJ KEY SYNC)."}
+
+      - section: "Deck {n} ({side}) - SAMPLER mode (deck utilities)"
+      - target: "d{d}@cdj-3000x:{c}"
+        msg: "note {pad} 0x30+{i}"
+        only: bridge
+        items:
+          - {c: memory, t: "saves a memory cue (or the active loop), the CDJ MEMORY button"}
+          - {c: delete, t: "deletes the memory cue you are on, the CDJ DELETE button"}
+          - {c: slip, t: "toggles SLIP"}
+          - {c: quantize, t: "toggles QUANTIZE"}
+          - {c: mastertempo, t: "toggles MASTER TEMPO (key lock)"}
+          - {c: temporeset, t: "resets the tempo fader to 0%"}
+          - {c: vinylmode, t: "switches the jog to VINYL mode"}
+          - {c: cdjmode, t: "switches the jog to CDJ mode"}
+        why: "pad {i1} {t}. The FLX4 has no sampler here, so these pads carry CDJ buttons it lacks."
+      - target: "d{d}@cdj-3000x:{c}"
+        msg: "note {spad} 0x30+{i}"
+        only: bridge
+        items:
+          - {c: trackfwd, t: "next track (CDJ TRACK SEARCH >>|)"}
+          - {c: searchback, t: "fast-scan back (CDJ SEARCH <<)"}
+          - {c: searchfwd, t: "fast-scan forward (CDJ SEARCH >>)"}
+          - {c: nudgeback, t: "nudge the tempo down (CDJ NUDGE -)"}
+          - {c: nudgefwd, t: "nudge the tempo up (CDJ NUDGE +)"}
+          - {c: direction/rev, t: "reverse playback while held (CDJ reverse lever)"}
+          - {c: screen/time, t: "switches the time display between elapsed and remaining"}
+        why: "SHIFT+pad {i1}: {t}."
+
+      # The mixer is shared, so each mixer control can sit on only one deck's pads.
+      - only_decks: [0]
+        bindings:
+          - section: "Deck 1 (left) - PAD FX 1 mode (Beat FX toolbox)"
+          - target: "mx@djm-a9:{c}"
+            msg: "note {pad} 0x10+{i}"
+            only: bridge
+            items:
+              - {c: fx.freqLow, t: "Beat FX LOW band on/off (A9 LOW)"}
+              - {c: fx.freqMid, t: "Beat FX MID band on/off (A9 MID)"}
+              - {c: fx.freqHi, t: "Beat FX HI band on/off (A9 HI)"}
+              - {c: fx.quantize, t: "Beat FX QUANTIZE on/off"}
+              - {c: fx.cfa, t: "puts every channel on crossfader side A in the Beat FX (CH SELECT CF.A)"}
+              - {c: fx.cfb, t: "puts every channel on crossfader side B in the Beat FX (CH SELECT CF.B)"}
+              - {c: fx.mst, t: "puts the Beat FX on the master output (CH SELECT MST)"}
+            why: "left deck PAD FX 1, pad {i1}: {t}. The mixer is shared, so each mixer control can only sit on one deck's pads: the left deck holds the Beat FX toolbox."
+      - only_decks: [1]
+        bindings:
+          - section: "Deck 2 (right) - PAD FX 1 mode (Sound Color FX)"
+          - target: "mx@djm-a9:{c}"
+            msg: "note {pad} 0x10+{i}"
+            only: bridge
+            items:
+              - {c: scfx.space, t: "SPACE"}
+              - {c: scfx.dubecho, t: "DUB ECHO"}
+              - {c: scfx.crush, t: "CRUSH"}
+              - {c: scfx.sweep, t: "SWEEP"}
+              - {c: scfx.noise, t: "NOISE"}
+              - {c: scfx.filter, t: "FILTER"}
+              - {c: scfx.lockLamp, t: "CENTER LOCK"}
+            why: "right deck PAD FX 1, pad {i1}: Sound Color FX type {t}. The mixer is shared, so each mixer control can only sit on one deck's pads: the right deck holds the Color FX bank."
+
+      # ---------------------------------------------------- mixer channel strip
+      - section: "Mixer channel {n} (DJM-A9 strip)"
+      - {target: "mx@djm-a9:ch{d}.trim", msg: "cc {ch} 0x04", doc: "TRIM knob (14-bit). 1:1 with the A9 TRIM."}
+      - {target: "mx@djm-a9:ch{d}.eqHi", msg: "cc {ch} 0x07", doc: "EQ HI knob (14-bit). 1:1."}
+      - {target: "mx@djm-a9:ch{d}.eqMid", msg: "cc {ch} 0x0B", doc: "EQ MID knob (14-bit). The A9 has a 2-band mid (HI MID / LO MID); this drives the app's single mid control."}
+      - {target: "mx@djm-a9:ch{d}.eqLo", msg: "cc {ch} 0x0F", doc: "EQ LOW knob (14-bit). 1:1."}
+      - {target: "mx@djm-a9:ch{d}.fader", msg: "cc {ch} 0x13", doc: "Channel fader (14-bit). 1:1."}
+      - {target: "mx@djm-a9:ch{d}.color", msg: "cc 6 0x17+{d}", why: "the FLX4's per-channel FILTER knob drives the A9 COLOR knob (same job, different name)."}
+      - {target: "mx@djm-a9:ch{d}.cue", msg: "note {ch} 0x54", doc: "Headphone CUE button for this channel. 1:1 with the A9 CUE."}
+
+  # ------------------------------------------------------------ shared controls
+  - section: "Mixer - shared"
+  - {target: "mx@djm-a9:xf.pos", msg: "cc 6 0x1F", doc: "CROSSFADER (14-bit). 1:1."}
+  - {target: "mx@djm-a9:hpa.mix", msg: "cc 6 0x0C", why: "HEADPHONES MIXING knob drives the A9 phones A CUE/MIX. The A9 has a second headphone section that the FLX4 has no controls for."}
+  - {target: "mx@djm-a9:hpa.level", msg: "cc 6 0x0D", why: "HEADPHONES LEVEL knob drives the A9 phones A level (see above)."}
+
+  - section: "Beat FX"
+  - {target: "mx@djm-a9:fx.depth", msg: "cc 4 0x02", doc: "BEAT FX LEVEL/DEPTH knob. 1:1 with the A9 LEVEL/DEPTH."}
+  - {target: "mx@djm-a9:fx.onoff", msg: "note 4 0x47", doc: "BEAT FX ON/OFF. Only the channel-4 message is bound; with the CH slider on CH2 the FLX4 may send channel 5 instead, which is not bound (one control can only have one source)."}
+  - {target: "mx@djm-a9:fx.beatl", msg: "note 4 0x4A", doc: "BEAT FX BEAT < (shorten the effect beat). 1:1 with the A9 BEAT <."}
+  - {target: "mx@djm-a9:fx.beatr", msg: "note 4 0x4B", doc: "BEAT FX BEAT > (lengthen the effect beat). 1:1 with the A9 BEAT >."}
+  - {target: "mx@djm-a9:fx.ch0", msg: "note 4 0x10", doc: "BEAT FX CH SELECT slider at CH1 puts mixer channel 1 in the effect (exclusive). 1:1 with the A9 CH SELECT 1."}
+  - {target: "mx@djm-a9:fx.ch1", msg: "note 5 0x11", doc: "BEAT FX CH SELECT slider at CH2 puts mixer channel 2 in the effect (exclusive). The slider's third position is not bound because its message is unknown."}
+  - {target: "mx@djm-a9:fx.tap", msg: "note 4 0x63", why: "the FX SELECT button taps the effect tempo (A9 TAP). The A9 FX SELECT is a knob that takes an absolute position, so a button can't step through effects; see fx.select."}
+  - {target: "mx@djm-a9:fx.autotap", msg: "note 4 0x64", why: "SHIFT+FX SELECT toggles AUTO/TAP (A9 AUTO/TAP)."}
+  - target: "mx@djm-a9:fx.select"
+    msg: "cc 6 0x64"
+    opts: {rel: "2c", sens: 5}
+    why: "SHIFT+BROWSE turn picks the effect, because the FLX4 has no FX select knob. Relative, sensitivity 5 so one click is about one of the 14 effects."
