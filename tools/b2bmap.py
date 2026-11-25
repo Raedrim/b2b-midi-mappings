@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import fractions
 import json
 import pathlib
 import re
@@ -482,8 +483,8 @@ name: "{name}"
 profiles:
   default:
     title: "{name}"
-    port: "{port}"          # the MIDI input name, exactly as B2B Studio lists it
-    docs: true              # also write docs/MAPPING-default.md
+    port: "{port}"  # the MIDI input name, exactly as B2B Studio lists it
+    docs: true  # also write docs/MAPPING-default.md
 
 # Keep 'bindings' as the last key: 'learn' appends to the end of the file.
 # An example (remove the # signs, or let `learn` write bindings like this for you):
@@ -607,8 +608,72 @@ def import_options(raw):
     return opts
 
 
-def convert_preset(preset, port=None):
-    """Turn an exported B2B Studio preset into (name, port, YAML bindings text, entries, notes)."""
+def _beats(value):
+    """0.3333333333333333 -> '1/3', 16.0 -> '16': how a DJ says it."""
+    frac = fractions.Fraction(value).limit_denominator(64)
+    return str(frac.numerator) if frac.denominator == 1 else f"{frac.numerator}/{frac.denominator}"
+
+
+# Controls the registry lists without a name on the app's own panel.
+NAMELESS = {"cuecall_l": "CUE/LOOP CALL (left)", "cuecall_r": "CUE/LOOP CALL (right)", "fx.ch{n}": "BEAT FX channel {n} select"}
+
+
+def autodoc(target, registry):
+    """A description of what the B2B Studio control is, or None when there is nothing sure to say.
+
+    It names the B2B Studio side only (the deck, the CDJ or mixer control). Which physical control sends
+    the message is for the contributor to add.
+    """
+    m = _TARGET.match(target)
+    spec = registry["specs"].get(m.group(2)) if m else None
+    if not spec:
+        return None
+    unit, _, cid = m.groups()
+    where = f"Deck {int(unit[1:]) + 1}" if re.fullmatch(r"d\d+", unit) else "Mixer"
+    if cid.startswith("screen/"):
+        name, _, arg = cid[len("screen/"):].partition("=")
+        try:
+            number = float(arg) if arg else None
+        except ValueError:
+            return None
+        if name == "loop" and number is not None:
+            return f"{where}: sets a {_beats(number)}-beat loop, or resizes the active one."
+        if name == "jump" and number is not None:
+            return f"{where}: jumps {_beats(abs(number))} beat(s) {'back' if number < 0 else 'forward'}."
+        if name == "key" and number is not None:
+            if number == 0:
+                return f"{where}: resets the key shift."
+            return f"{where}: shifts the key by {number:+g} semitone(s)."
+        if name == "time":
+            return f"{where}: toggles elapsed and remaining time."
+        return None
+    base, _, sub = cid.partition("/")
+    label = None
+    for known, text in {**spec.get("controls", {}), **spec.get("extra", {})}.items():
+        if known == base:
+            label = text
+        elif "{n}" in known:
+            hit = re.fullmatch(re.escape(known).replace(r"\{n\}", r"(\d+)"), base)
+            if hit:
+                index = int(hit.group(1))
+                label = text.replace("{L}", chr(ord("A") + index % 26)).replace("{n}", str(index + 1))
+                where = f"Mixer channel {index + 1}" if known.startswith("ch{n}") else where
+        if label is not None:
+            break
+    if not label:
+        label = NAMELESS.get(re.sub(r"\d+$", "{n}", base) if base.startswith("fx.ch") else base)
+        if label and "{n}" in label:
+            label = label.replace("{n}", str(int(re.search(r"\d+$", base).group()) + 1))
+    if not label or "{" in label or "}" in label:    # braces would be read as template fields in mapping.yaml
+        return None
+    return f"{where}: {label}{' (' + sub + ')' if sub else ''}."
+
+
+def convert_preset(preset, port=None, registry=None):
+    """Turn an exported B2B Studio preset into (name, port, YAML bindings text, count, notes).
+
+    With a registry, bindings whose target has a known description get one instead of a TODO.
+    """
     if not isinstance(preset, dict) or not isinstance(preset.get("bindings"), dict):
         raise MappingError("this does not look like a B2B Studio preset: no 'bindings' object")
     rows, ports = [], {}
@@ -638,8 +703,13 @@ def convert_preset(preset, port=None):
     uses = {}
     for r in rows:
         uses[(r[2], r[3], r[4])] = uses.get((r[2], r[3], r[4]), 0) + 1
-    text = "".join(binding_text(t, k, c, n, TODO_DOC, False, o, share=uses[(k, c, n)] > 1)
-                   for t, _, k, c, n, o in rows)
+    docs = [(registry and autodoc(r[0], registry)) or TODO_DOC for r in rows]
+    text = "".join(binding_text(t, k, c, n, d, False, o, share=uses[(k, c, n)] > 1)
+                   for (t, _, k, c, n, o), d in zip(rows, docs))
+    drafted = sum(d != TODO_DOC for d in docs)
+    if drafted:
+        notes.append(f"{drafted} description(s) were drafted from the B2B Studio control names. They say what the "
+                     "control does in the app, so add the physical control where it helps (for example 'Jog wheel').")
     shared = sum(1 for v in uses.values() if v > 1)
     if shared:
         notes.append(f"{shared} controller message(s) drive several targets and were marked 'share: true'. "
@@ -660,9 +730,9 @@ def cmd_import(args):
         raise MappingError(f"cannot read {args.file}: {exc}")
     except json.JSONDecodeError as exc:
         raise MappingError(f"{args.file} is not valid JSON: {exc}")
-    pname, port, bindings, count, notes = convert_preset(preset, args.port)
-    name = args.name or pname or slug
     registry = load_registry()
+    pname, port, bindings, count, notes = convert_preset(preset, args.port, None if args.no_autodoc else registry)
+    name = args.name or pname or slug
     unknown = sorted({e for e in (check_target(t, registry)[0] for t in preset["bindings"]) if e})
     write_text(d / "mapping.yaml", TEMPLATE.format(slug=slug, name=name, port=port) + bindings)
     write_text(d / "README.md", README_STUB.format(name=name))
@@ -672,7 +742,7 @@ def cmd_import(args):
     for err in unknown:
         print(f"  unknown target: {err.split(': ', 1)[0]}")
     print("Next:")
-    print(f"  1. Replace every '{TODO_DOC}' in controllers/{slug}/mapping.yaml.")
+    print(f"  1. Review the descriptions in controllers/{slug}/mapping.yaml and replace every '{TODO_DOC}'.")
     print("     Use doc: when the controller has a matching control, why: when you made a judgement call.")
     print(f"  2. Fill in controllers/{slug}/README.md, including what you tested and on which system.")
     print("  3. python tools/b2bmap.py build, then python tools/b2bmap.py check")
@@ -860,6 +930,7 @@ def main(argv=None):
     p.add_argument("slug")
     p.add_argument("--name", help='for example "Vendor Model" (default: the name inside the preset)')
     p.add_argument("--port", help="the MIDI input to import, if the preset reads from several")
+    p.add_argument("--no-autodoc", action="store_true", help="leave a TODO on every binding instead of drafting descriptions")
     p.set_defaults(fn=cmd_import)
     p = sub.add_parser("learn", help="press controls and append bindings to mapping.yaml")
     p.add_argument("slug")

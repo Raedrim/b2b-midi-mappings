@@ -41,7 +41,7 @@ wake:
   interval: 2
 
 decks:
-  - {d: 0, n: 1, side: left,  ch: 0, pad: 7, spad: 8}
+  - {d: 0, n: 1, side: left, ch: 0, pad: 7, spad: 8}
   - {d: 1, n: 2, side: right, ch: 1, pad: 9, spad: 10}
 
 # Keep 'bindings' as the last key: `learn` appends to the end of the file.

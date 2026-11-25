@@ -30,7 +30,7 @@ If you built your mapping with B2B Studio's own MIDI Learn, you have most of the
 python tools/b2bmap.py import my-export.json my-controller --name "Vendor Model"
 ```
 
-The tool reads every binding, works out the options (endless encoders, inverted faders, sensitivity), marks controls that share one message, and writes `controllers/my-controller/mapping.yaml` plus a README stub. It leaves one thing for you: each binding carries a `TODO` description, and `check` fails until you replace them with `doc:` or `why:` lines. If the export reads from several MIDI inputs, add `--port "name"` to pick one. Then run `build` and `check` as below.
+The tool reads every binding, works out the options (endless encoders, inverted faders, sensitivity), marks controls that share one message, and writes `controllers/my-controller/mapping.yaml` plus a README stub. It also drafts a description for every control it recognises, such as `Deck 1: PLAY / PAUSE.` or `Deck 2: sets a 16-beat loop, or resizes the active one.` Those say what the control does in B2B Studio. Read through them and add the physical control where it helps, for example "Jog wheel". Anything it cannot name keeps a `TODO` description, and `check` fails until you replace it with a `doc:` or `why:` line. Pass `--no-autodoc` to get a `TODO` on every binding instead. If the export reads from several MIDI inputs, add `--port "name"` to pick one. Then run `build` and `check` as below.
 
 No Python? Open an issue with the exported file attached, and a maintainer can run the import for you.
 
@@ -61,6 +61,15 @@ Fill in the generated `controllers/my-controller/README.md` with what the preset
 ### Scripts
 
 Most controllers need only the preset. If yours needs a script, put it in the controller's folder, keep it cross-platform where possible, and add a launcher if a double-click helps. `controllers/ddj-flx4` shows one approach.
+
+## YAML style
+
+CI runs `yamllint` on every YAML file, including each `mapping.yaml`, with the rules in `.yamllint.yml`: two-space indents, no trailing spaces, no stray alignment padding. `.editorconfig` sets the same basics in most editors. To check before you push:
+
+```bash
+pip install yamllint
+yamllint --strict .
+```
 
 ## Fixing or changing a mapping
 
