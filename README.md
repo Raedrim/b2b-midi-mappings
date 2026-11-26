@@ -20,8 +20,8 @@ Plugging in the FLX4 and importing a preset is not enough. The controller waits 
 
 1. Download the latest `ddj-flx4` zip from [Releases](../../releases) and unzip it. If there is no release yet, click **Code**, then **Download ZIP**, and open `controllers/ddj-flx4`.
 2. On Windows, install Python 3 and [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html), then create a loopMIDI port named `FLX4 Bridge`. On macOS, install Python 3.
-3. Double-click `start-bridge.bat` (Windows) or `start-bridge.command` (macOS) and leave the window open.
-4. Start B2B Studio and import the preset from the `presets` folder.
+3. Double-click `start-bridge.bat` (Windows) or `start-bridge.command` (macOS) and leave the window open. It asks which decks you want, so two people can take 1 and 3, and 2 and 4.
+4. Start B2B Studio and import the preset the bridge names, from the `presets` folder.
 
 Start the bridge before B2B Studio every time. [controllers/ddj-flx4/README.md](controllers/ddj-flx4/README.md) has the full steps, a troubleshooting table, a control reference and a setup without loopMIDI. The same file ships inside the release zip. The macOS setup is untested.
 

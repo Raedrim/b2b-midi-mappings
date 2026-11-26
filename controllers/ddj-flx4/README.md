@@ -19,7 +19,7 @@ Every file mentioned below sits in this folder, the unzipped `ddj-flx4` folder f
 5. The green MIDI LED on the controller stops blinking, and the pad-mode buttons light when you press them.
 6. Start B2B Studio, open its MIDI settings and import `presets/ddj-flx4-bridge-windows.b2bmidi.json`.
 
-Start the bridge before B2B Studio every time.
+Start the bridge before B2B Studio every time. It asks which decks you want. Press Enter for 1 and 2, or see [Claiming other decks](#claiming-other-decks).
 
 Windows lets only one program read the FLX4 at a time. The bridge reads it and passes everything to the loopMIDI port, and B2B Studio reads that port instead. Tobias Erichsen makes loopMIDI, which is free for private non-commercial use. Its license forbids redistribution, so this project does not include it.
 
@@ -56,6 +56,7 @@ To skip loopMIDI, run `pip install -r requirements.txt` in this folder, then `py
 | `start-bridge.bat`, `start-bridge.command` | Double-click launchers for Windows and macOS. |
 | `flx4_bridge.py` | Wakes the controller, switches pad modes, lights buttons and, on Windows, forwards MIDI to loopMIDI. |
 | `flx4_wake.py` | Sends the wake-up message only. Pairs with the direct preset. |
+| `assign_decks.py` | Copies a preset onto other decks. The bridge uses it. |
 | `presets/` | The importable presets. |
 | `docs/MAPPING-bridge-windows.md`, `docs/MAPPING-direct.md` | Every binding, with its message, target and effect. |
 | `docs/PROTOCOL.md` | What the FLX4 sends and expects. |
@@ -120,6 +121,7 @@ python flx4_bridge.py --pad-lights held    # pads light only while pressed
 python flx4_bridge.py --pad-lights off     # no pad lights
 python flx4_bridge.py --forward off        # no forwarding, for testing without loopMIDI
 python flx4_bridge.py --virtual-port NAME  # use a differently named loopMIDI port
+python flx4_bridge.py --decks 1,3          # claim decks without being asked
 ```
 
 The launchers pass options through. For example, run `start-bridge.bat --pad-lights held`.
@@ -135,12 +137,15 @@ Hot cue pads stay dark when idle by default. The bridge cannot see which cues B2
 
 ## Claiming other decks
 
-The presets use `d0` and `d1` with mixer channels `ch0` and `ch1`. Deck number N is `d(N-1)`. To use Deck 3 on the left and Deck 4 on the right, find and replace in this order so nothing collides:
+The shipped presets drive Deck 1 on the left and Deck 2 on the right. Two people can share one session, for example one on decks 1 and 3 and the other on 2 and 4.
 
-1. `d1@` → `d3@` and `mx@djm-a9:ch1.` → `mx@djm-a9:ch3.`
-2. `d0@` → `d2@` and `mx@djm-a9:ch0.` → `mx@djm-a9:ch2.`
+When you start the bridge it asks which decks are yours. Type the left and right deck, such as `1,3`, or press Enter to keep 1 and 2. For any other pair it also asks whether to leave out the crossfader, headphone and effect controls, which suits the player who does not run them. It then writes a new preset such as `presets/ddj-flx4-bridge-windows-decks-1-3.b2bmidi.json`. Import that file in B2B Studio yourself. The bridge cannot do it for you, and B2B Studio keeps at most five presets.
 
-Leave the shared controls (crossfader, Beat FX, headphones) alone. Each preset file carries the same note at the top.
+The mixer channel strips and the Beat FX channel select move with the decks. The bridge itself behaves the same whichever decks you pick.
+
+To skip the questions, run `start-bridge.bat --decks 1,3` (add `--no-shared` to leave out the shared controls).
+
+Without the bridge, or for a preset you exported from B2B Studio, run `python assign_decks.py` in this folder and answer the questions. In a clone of the repository the script is in `tools/`.
 
 ## Changing the preset
 

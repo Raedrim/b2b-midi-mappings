@@ -10,13 +10,16 @@ Does what the app can't do on its own:
      macOS lets programs share the controller, so nothing is forwarded there.
 
 Windows setup (once): install loopMIDI and create a port called "FLX4 Bridge" (see README.md).
-Run this BEFORE B2B Studio and leave it open.
+Run this BEFORE B2B Studio and leave it open. It asks which decks you want: for anything other than
+1 and 2 it writes a matching preset into presets/ for you to import.
 
     python flx4_bridge.py                     # normal use (python3 on macOS)
     python flx4_bridge.py --forward off       # test modes/LEDs without loopMIDI
     python flx4_bridge.py --pad-lights all    # light every pad in every mode
+    python flx4_bridge.py --decks 1,3         # no questions: left side Deck 1, right side Deck 3
 """
 import argparse
+import pathlib
 import sys
 import threading
 import time
@@ -89,7 +92,8 @@ class Bridge:
                 self.pad_leds(deck, MODES[button][1], True)
             self.mode[deck] = button
         if announce:
-            print(f"deck {deck + 1}: {MODES[button][0]}", flush=True)
+            side = "left" if deck == 0 else "right"     # the side of the controller, whatever deck it drives
+            print(f"{side} pads: {MODES[button][0]}", flush=True)
 
     def lights_off(self):
         for deck in (0, 1):
@@ -149,6 +153,55 @@ def find(names, needle):
     return next((n for n in names if needle in n), None)
 
 
+def load_assign_decks():
+    """assign_decks.py sits next to this file in a release download, and in tools/ in the repository."""
+    here = pathlib.Path(__file__).resolve().parent
+    for folder in (here, here.parent.parent / "tools"):
+        if (folder / "assign_decks.py").is_file():
+            sys.path.insert(0, str(folder))
+            import assign_decks
+            return assign_decks
+    return None
+
+
+def claim_decks(decks=None, shared=True, interactive=True, ask=input, platform=sys.platform):
+    """Write the preset for the decks the player wants. Never stops the bridge: problems are only printed."""
+    if decks is None and not interactive:
+        return None
+    tool = load_assign_decks()
+    if tool is None:
+        print("assign_decks.py is missing, so other decks cannot be set up. Download the release again.", flush=True)
+        return None
+    name = "ddj-flx4-bridge-windows" if platform == "win32" else "ddj-flx4-bridge-mac"
+    source = pathlib.Path(__file__).resolve().parent / "presets" / f"{name}{tool.SUFFIX}"
+    try:
+        if decks is None:
+            while True:
+                answer = ask("\nWhich decks are yours? Left and right, for example 1,3 [Enter = 1,2]: ").strip()
+                try:
+                    left, right = tool.parse_decks(answer or "1,2")
+                    break
+                except tool.DeckError as exc:
+                    print(exc, flush=True)
+            if (left, right) != (1, 2):
+                reply = ask("Leave out crossfader, headphones and effects (someone else runs them)? [y/N]: ")
+                shared = not reply.strip().lower().startswith("y")
+        else:
+            left, right = tool.parse_decks(decks)
+        if (left, right) == (1, 2) and shared:
+            print(f"Decks 1 and 2: use presets/{source.name}.", flush=True)
+            return source
+        target, count = tool.convert_file(source, left, right, shared)
+    except EOFError:
+        return None
+    except (tool.DeckError, OSError) as exc:
+        print(f"Could not set up the decks: {exc}", flush=True)
+        return None
+    print(f"Decks {left} and {right}: wrote presets/{target.name} ({count} bindings).\n"
+          "Import that file in B2B Studio's MIDI settings.", flush=True)
+    return target
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--virtual-port", default="FLX4 Bridge",
@@ -158,6 +211,9 @@ def main():
     ap.add_argument("--pad-lights", choices=["banks", "all", "held", "off"], default="banks",
                     help="banks: pads lit in every mode except hot cue (default); all: every pad lit; "
                          "held: pads light only while pressed; off: no pad lights")
+    ap.add_argument("--decks", help="left and right deck, for example 1,3 (default: ask when started)")
+    ap.add_argument("--no-shared", action="store_true",
+                    help="with --decks: leave crossfader, headphone and effect controls out of the preset")
     args = ap.parse_args()
 
     in_name = find(mido.get_input_names(), "DDJ-FLX4")
@@ -197,8 +253,11 @@ def main():
     except Exception as exc:
         sys.exit(f"Could not open {in_name}: {exc}\nClose B2B Studio and any other MIDI program, then try again.")
 
-    print(f"Keeping {out_name} awake and handling pad modes. Leave this window open; start B2B Studio now.", flush=True)
+    print(f"Keeping {out_name} awake and handling pad modes.", flush=True)
     try:
+        # The controller already works here: messages are handled on another thread while we wait for an answer.
+        claim_decks(args.decks, not args.no_shared, interactive=sys.stdin is not None and sys.stdin.isatty())
+        print("Leave this window open; start B2B Studio now.", flush=True)
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
