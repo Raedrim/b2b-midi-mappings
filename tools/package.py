@@ -4,7 +4,7 @@
     python tools/package.py v1.2.0
 
 Writes one zip per controller (<slug>-<version>.zip: the controller folder without build artefacts, plus
-the LICENSE), a zip with just the importable presets of every controller, and SHA256SUMS. The macOS
+the LICENSE and the deck assignment tool), a zip with just the importable presets of every controller, and SHA256SUMS. The macOS
 launcher keeps its executable bit inside the zip.
 """
 from __future__ import annotations
@@ -18,6 +18,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 SKIP_DIRS = {".venv", "__pycache__", ".git"}
 EXECUTABLE = {".command", ".sh"}
+# Tools that work on any preset, so every controller zip carries them.
+SHARED_TOOLS = ("assign_decks.py",)
 FIXED_TIME = (2026, 1, 1, 0, 0, 0)       # reproducible archives
 
 
@@ -31,7 +33,7 @@ def add(zf, path, arcname):
 
 def files_under(folder):
     for p in sorted(folder.rglob("*")):
-        if p.is_file() and not (set(p.relative_to(folder).parts) & SKIP_DIRS) and p.suffix != ".pyc":
+        if p.is_file() and not (set(p.relative_to(folder).parts) & SKIP_DIRS) and p.suffix != ".pyc" and "-decks-" not in p.name:
             yield p
 
 
@@ -51,11 +53,15 @@ def main(version):
             for p in files_under(d):
                 add(zf, p, f"{d.name}/{p.relative_to(d).as_posix()}")
             add(zf, ROOT / "LICENSE", f"{d.name}/LICENSE")
+            for name in SHARED_TOOLS:
+                add(zf, ROOT / "tools" / name, f"{d.name}/{name}")
         outputs.append(out)
     out = DIST / f"presets-{version}.zip"
     with zipfile.ZipFile(out, "w") as zf:
         for d in controllers:
             for p in sorted((d / "presets").glob("*.b2bmidi.json")):
+                if "-decks-" in p.name:
+                    continue
                 add(zf, p, f"{d.name}/{p.name}")
         add(zf, ROOT / "LICENSE", "LICENSE")
     outputs.append(out)

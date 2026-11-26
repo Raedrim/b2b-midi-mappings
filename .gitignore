@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 venv/
 dist/
+
+# Presets made for other decks on this computer
+controllers/*/presets/*-decks-*

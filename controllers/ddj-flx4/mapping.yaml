@@ -28,11 +28,7 @@ profiles:
 
 readme:
   - "DDJ-FLX4 preset for B2B Studio. LEFT deck = d0 (Deck 1, mixer ch0), RIGHT deck = d1 (Deck 2, mixer ch1)."
-  - "To claim other decks: find & replace in this file. Deck number N is d(N-1) and mixer channel (N-1)."
-  - "Example for Deck 3 on the left and Deck 4 on the right - do these in THIS order so nothing collides:"
-  - "  1) d1@  ->  d3@   and   mx@djm-a9:ch1.  ->  mx@djm-a9:ch3."
-  - "  2) d0@  ->  d2@   and   mx@djm-a9:ch0.  ->  mx@djm-a9:ch2."
-  - "Leave everything else alone (mx@djm-a9:xf.pos, fx.*, hpa.* are shared by both sides)."
+  - "For other decks, start the bridge and answer its question, or run assign_decks.py on this file. Both write a new preset to import."
   - "Hot cue delete: hold SHIFT+CUE, release SHIFT, tap the pad."
 
 # The FLX4 only talks once the host sends this SysEx (found by the Mixxx team). `learn` sends it too.
